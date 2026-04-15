@@ -1,0 +1,43 @@
+{
+  "name": "powerbi-modeling-codex",
+  "version": "0.1.0",
+  "description": "Codex plugin for operating Power BI semantic models through the official Power BI Modeling MCP server.",
+  "author": {
+    "name": "KB461VT",
+    "email": "kb461vt@example.com",
+    "url": "https://github.com/microsoft/powerbi-modeling-mcp"
+  },
+  "homepage": "https://learn.microsoft.com/power-bi/developer/mcp/",
+  "repository": "https://github.com/microsoft/powerbi-modeling-mcp",
+  "license": "MIT",
+  "keywords": [
+    "powerbi",
+    "mcp",
+    "semantic-model",
+    "dax",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Power BI Modeling MCP",
+    "shortDescription": "Connect and edit Power BI semantic models from Codex",
+    "longDescription": "Provides a Codex skill and local MCP wiring for full Power BI Modeling MCP operations, including connection, model metadata, tables, columns, measures, relationships, DAX queries, partitions, and governance objects.",
+    "developerName": "Local Plugin",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://learn.microsoft.com/power-bi/developer/mcp/",
+    "privacyPolicyURL": "https://privacy.microsoft.com/privacystatement",
+    "termsOfServiceURL": "https://www.microsoft.com/servicesagreement",
+    "defaultPrompt": [
+      "Connect to my PBIX in Power BI Desktop and list tables/columns.",
+      "Create or update a DAX measure using measure_operations.",
+      "Validate model changes and summarize what was modified."
+    ],
+    "brandColor": "#f2c811"
+  }
+}

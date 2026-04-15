@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "powerbi-modeling-mcp": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@microsoft/powerbi-modeling-mcp@latest",
+        "--start"
+      ],
+      "env": {
+        "SystemRoot": "C:\\Windows",
+        "PROGRAMFILES": "C:\\Program Files"
+      },
+      "startupTimeoutMs": 120000
+    }
+  }
+}

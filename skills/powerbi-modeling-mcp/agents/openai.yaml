@@ -1,0 +1,3 @@
+interface:
+  display_name: "Power BI Modeling MCP"
+  short_description: "Run full semantic model operations via official Power BI MCP"
