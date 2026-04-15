@@ -12,6 +12,10 @@ A Codex plugin that integrates the official Microsoft Power BI Modeling MCP serv
   - `skills/powerbi-modeling-mcp/references/operations-index.md`
   - `skills/powerbi-modeling-mcp/references/operations-catalog.json`
 - Installer script: `scripts/install-local.ps1`
+- Bootstrap installer (one command): `scripts/bootstrap-install.ps1`
+- End-user guide page: `end-user-guide.html`
+
+Open the guide directly in a browser for onboarding visuals and copy-ready commands.
 
 ## Prerequisites
 
@@ -32,6 +36,24 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1
 This copies the plugin into `~/plugins/powerbi-modeling-codex` and updates `~/.agents/plugins/marketplace.json`.
 
 3. Restart Codex desktop.
+
+## Install (public one-command bootstrap)
+
+This flow assumes the repository is public.
+
+Run this from PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "iex (irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1')"
+```
+
+Optional forced update (overwrite existing local plugin):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Force"
+```
+
+After install, restart Codex desktop.
 
 ## Usage examples in Codex
 
@@ -58,3 +80,8 @@ Then rebuild the summary index if needed.
 
 - This plugin focuses on semantic model operations (tables, columns, measures, relationships, DAX query, etc.).
 - Report canvas visual authoring in Power BI Desktop UI is not exposed by the current modeling MCP operations.
+- If Codex cannot handshake with MCP in-session, use the included fallback client:
+
+```powershell
+node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.js list-tools
+```

@@ -32,6 +32,7 @@ if (Test-Path -LiteralPath $destinationPluginPath) {
 }
 
 New-Item -ItemType Directory -Path $PluginParent -Force | Out-Null
+New-Item -ItemType Directory -Path $destinationPluginPath -Force | Out-Null
 Copy-Item -Path (Join-Path $sourcePluginPath '*') -Destination $destinationPluginPath -Recurse -Force
 
 $marketplaceDir = Split-Path -Parent $MarketplacePath
