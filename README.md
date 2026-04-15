@@ -2,6 +2,12 @@
 
 A Codex plugin that integrates the official Microsoft Power BI Modeling MCP server and provides a ready-to-use skill for semantic model operations.
 
+## Upstream Acknowledgment
+
+This project is built on top of Microsoft's official Power BI Modeling MCP server:
+
+- https://github.com/microsoft/powerbi-modeling-mcp
+
 ## What is included
 
 - Plugin manifest: `.codex-plugin/plugin.json`
@@ -13,9 +19,18 @@ A Codex plugin that integrates the official Microsoft Power BI Modeling MCP serv
   - `skills/powerbi-modeling-mcp/references/operations-catalog.json`
 - Installer script: `scripts/install-local.ps1`
 - Bootstrap installer (one command): `scripts/bootstrap-install.ps1`
-- End-user guide page: `end-user-guide.html`
+- GitHub Pages entry file: `index.html`
+- End-user guide page (same content): `end-user-guide.html`
 
 Open the guide directly in a browser for onboarding visuals and copy-ready commands.
+
+## GitHub Pages
+
+This repo is ready for GitHub Pages because it now includes `index.html`.
+
+After making the repo public and enabling Pages (`main` branch / root), the site URL will be:
+
+- `https://pashupatimishra20.github.io/powerbi-modeling-codex-mcp/`
 
 ## Prerequisites
 

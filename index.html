@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Power BI Modeling MCP for Codex - GitHub Pages Guide</title>
+  <meta name="description" content="Need, setup, usage, and troubleshooting guide for Power BI Modeling MCP plugin for Codex.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f3ea;
+      --paper: #fffcf5;
+      --ink: #1f2826;
+      --muted: #5b6661;
+      --accent: #0f8f7e;
+      --accent-2: #c78924;
+      --line: #d8d2c2;
+      --shadow: 0 18px 45px rgba(22, 39, 35, 0.12);
+      --radius: 18px;
+      --content: 1120px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 12% 8%, #fff5d7 0, transparent 36%),
+                  radial-gradient(circle at 88% 0%, #d7f6f0 0, transparent 34%),
+                  var(--bg);
+      color: var(--ink);
+    }
+
+    body {
+      font-family: "Source Serif 4", Georgia, serif;
+      font-size: clamp(1rem, 0.96rem + 0.18vw, 1.12rem);
+      line-height: 1.62;
+    }
+
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(rgba(33, 49, 45, 0.05) 0.7px, transparent 0.7px);
+      background-size: 3px 3px;
+      opacity: 0.16;
+      z-index: 0;
+    }
+
+    .shell {
+      max-width: var(--content);
+      margin: 0 auto;
+      padding: 28px 20px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(140deg, rgba(255, 252, 245, 0.97), rgba(239, 246, 243, 0.94));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      right: -110px;
+      top: -130px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(15, 143, 126, 0.3), rgba(15, 143, 126, 0));
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      padding: clamp(26px, 3.5vw, 44px);
+      align-items: end;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: "IBM Plex Mono", Consolas, monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    h1, h2, h3 {
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      line-height: 1.1;
+      margin: 0;
+      text-wrap: balance;
+      letter-spacing: -0.01em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 1.45rem + 2.5vw, 3.6rem);
+      margin-bottom: 12px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      max-width: 70ch;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      border: 1px solid rgba(15, 143, 126, 0.25);
+      background: rgba(255, 255, 255, 0.7);
+      color: #0a5f53;
+      padding: 9px 13px;
+      border-radius: 999px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      text-decoration: none;
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .pill:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(15, 143, 126, 0.2);
+    }
+
+    .hero-art {
+      border: 1px solid rgba(31, 40, 38, 0.14);
+      border-radius: 16px;
+      background: linear-gradient(160deg, #fef8ea, #e9f7f3);
+      padding: 14px;
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+    }
+
+    .hero-art svg {
+      width: 100%;
+      height: auto;
+      max-width: 360px;
+    }
+
+    .layout {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: clamp(18px, 2.4vw, 24px);
+      box-shadow: 0 7px 22px rgba(25, 38, 35, 0.07);
+    }
+
+    .card h2 {
+      font-size: clamp(1.34rem, 1.2rem + 0.7vw, 1.9rem);
+      margin-bottom: 10px;
+    }
+
+    .card h3 {
+      font-size: 1.06rem;
+      margin: 14px 0 8px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    .code {
+      margin-top: 10px;
+      background: #101615;
+      color: #f4fff8;
+      border-radius: 12px;
+      border: 1px solid #253332;
+      padding: 13px;
+      font-family: "IBM Plex Mono", Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .steps {
+      counter-reset: s;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .steps li {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 12px 12px 44px;
+      position: relative;
+      color: var(--muted);
+      background: #fffef8;
+    }
+
+    .steps li::before {
+      counter-increment: s;
+      content: counter(s);
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 0.8rem;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 450ms ease, transform 450ms ease;
+    }
+
+    .reveal.on {
+      opacity: 1;
+      transform: none;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 0.9rem;
+      color: #5f6865;
+      text-align: center;
+    }
+
+    @media (max-width: 920px) {
+      .hero-grid,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain"></div>
+  <main class="shell">
+    <section class="hero reveal">
+      <div class="hero-grid">
+        <div>
+          <span class="eyebrow">Power BI + Codex</span>
+          <h1>Power BI Modeling MCP for Codex</h1>
+          <p>
+            Run semantic-model operations in plain language: connect PBIX/PBIP, inspect schema,
+            create measures, manage relationships, validate DAX, and troubleshoot model changes.
+          </p>
+          <p>
+            Built on Microsoft's official Power BI Modeling MCP server:
+            <a href="https://github.com/microsoft/powerbi-modeling-mcp" target="_blank" rel="noopener noreferrer">github.com/microsoft/powerbi-modeling-mcp</a>
+          </p>
+          <div class="hero-actions">
+            <a class="pill" href="#install">One-command install</a>
+            <a class="pill" href="#usage">Usage commands</a>
+            <a class="pill" href="#support">Troubleshooting</a>
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+          <svg viewBox="0 0 360 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="9" y="12" width="342" height="206" rx="14" fill="#FEFEFC" stroke="#D6D3C8"/>
+            <rect x="25" y="28" width="116" height="172" rx="10" fill="#F2F7F5" stroke="#CBD8D4"/>
+            <rect x="36" y="44" width="92" height="14" rx="7" fill="#0F8F7E"/>
+            <rect x="36" y="69" width="76" height="10" rx="5" fill="#A3B0AD"/>
+            <rect x="36" y="86" width="84" height="10" rx="5" fill="#A3B0AD"/>
+            <rect x="36" y="103" width="66" height="10" rx="5" fill="#A3B0AD"/>
+            <rect x="153" y="28" width="182" height="72" rx="10" fill="#F9F4E7" stroke="#E7D8B8"/>
+            <rect x="165" y="43" width="84" height="12" rx="6" fill="#C78924"/>
+            <rect x="165" y="64" width="150" height="9" rx="4.5" fill="#B9A990"/>
+            <rect x="153" y="112" width="182" height="88" rx="10" fill="#ECF6F4" stroke="#BFDCD6"/>
+            <path d="M171 175L202 150L228 160L254 136L282 147L314 126" stroke="#0F8F7E" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="202" cy="150" r="5" fill="#0F8F7E"/>
+            <circle cx="254" cy="136" r="5" fill="#0F8F7E"/>
+            <circle cx="314" cy="126" r="5" fill="#0F8F7E"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <article class="card reveal">
+        <h2>Who Needs This</h2>
+        <ul>
+          <li>Power BI modelers who want to automate repetitive model tasks.</li>
+          <li>Analysts who need fast DAX and schema iteration inside Codex.</li>
+          <li>Teams maintaining PBIX/PBIP/TMDL/BIM-based semantic models.</li>
+          <li>Engineers building governed, scripted modeling workflows.</li>
+        </ul>
+      </article>
+
+      <article class="card reveal">
+        <h2>What You Can Do</h2>
+        <ul>
+          <li>Connect to local Power BI Desktop models.</li>
+          <li>List/edit tables, columns, measures, and relationships.</li>
+          <li>Run DAX validation/execution and model refresh operations.</li>
+          <li>Export/import model artifacts via TMDL or BIM operations.</li>
+        </ul>
+      </article>
+
+      <article class="card wide reveal" id="install">
+        <h2>Install in One Command</h2>
+        <p>For a public GitHub repo, users can bootstrap directly from PowerShell:</p>
+        <div class="code">powershell -NoProfile -ExecutionPolicy Bypass -Command "iex (irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1')"</div>
+        <h3>Forced upgrade (overwrite existing local plugin)</h3>
+        <div class="code">powershell -NoProfile -ExecutionPolicy Bypass -Command "&amp; ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Force"</div>
+        <p>Then restart Codex desktop.</p>
+      </article>
+
+      <article class="card reveal" id="usage">
+        <h2>Usage in Codex</h2>
+        <ul class="steps">
+          <li>Open your PBIX in Power BI Desktop.</li>
+          <li>In Codex, call the skill and connect to the file.</li>
+          <li>Run schema or modeling operations in natural language.</li>
+          <li>Validate outputs with list/get operations after changes.</li>
+        </ul>
+        <div class="code">USE powerbi-modeling-mcp Connect to 'CVs.pbix' in Power BI Desktop
+USE powerbi-modeling-mcp list tables
+USE powerbi-modeling-mcp create a measure to count inactive candidates</div>
+      </article>
+
+      <article class="card reveal" id="support">
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>If MCP handshake fails in-client, use fallback client in this repo.</li>
+          <li>Confirm local instance discovery (`ListLocalInstances`).</li>
+          <li>Run `Connect` with the returned localhost connection string.</li>
+          <li>Use official Microsoft troubleshooting guidance for package/runtime issues.</li>
+        </ul>
+        <div class="code">node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.js list-tools
+node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.js help connection_operations</div>
+      </article>
+
+      <article class="card wide reveal">
+        <h2>Scope & Boundaries</h2>
+        <p>
+          This integration targets <strong>semantic model operations</strong>. Report-canvas visual authoring
+          (placing charts and formatting visuals directly on the PBIX canvas UI) is not currently
+          exposed by the modeling MCP toolset.
+        </p>
+      </article>
+
+      <article class="card wide reveal">
+        <h2>Upstream Foundation</h2>
+        <p>
+          This Codex plugin is an integration layer on top of the official Microsoft project:
+          <a href="https://github.com/microsoft/powerbi-modeling-mcp" target="_blank" rel="noopener noreferrer">microsoft/powerbi-modeling-mcp</a>.
+        </p>
+      </article>
+    </section>
+
+    <p class="footer">Power BI Modeling MCP for Codex · GitHub Pages Guide</p>
+  </main>
+
+  <script>
+    const revealItems = [...document.querySelectorAll(".reveal")];
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("on");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.18 });
+
+    revealItems.forEach((el, i) => {
+      el.style.transitionDelay = `${i * 70}ms`;
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>
