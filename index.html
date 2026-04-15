@@ -140,6 +140,79 @@
       box-shadow: 0 8px 18px rgba(15, 143, 126, 0.2);
     }
 
+    .pill-share {
+      border-color: rgba(199, 137, 36, 0.35);
+      color: #7a5313;
+      background: rgba(255, 247, 231, 0.88);
+    }
+
+    .pill-share:hover {
+      box-shadow: 0 8px 18px rgba(199, 137, 36, 0.2);
+    }
+
+    .linkedin-strip {
+      margin-top: 14px;
+      border: 1px solid rgba(15, 143, 126, 0.24);
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(232, 249, 246, 0.92), rgba(255, 255, 255, 0.9));
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .linkedin-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 250px;
+    }
+
+    .linkedin-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: #0a66c2;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+      flex: 0 0 auto;
+    }
+
+    .linkedin-meta {
+      display: grid;
+      gap: 1px;
+    }
+
+    .linkedin-name {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    .linkedin-handle {
+      margin: 0;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.75rem;
+      color: #0a66c2;
+      text-decoration: none;
+    }
+
+    .linkedin-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
     .hero-art {
       border: 1px solid rgba(31, 40, 38, 0.14);
       border-radius: 16px;
@@ -290,6 +363,19 @@
             <a class="pill" href="#install">One-command install</a>
             <a class="pill" href="#usage">Usage commands</a>
             <a class="pill" href="#support">Troubleshooting</a>
+          </div>
+          <div class="linkedin-strip" aria-label="LinkedIn actions">
+            <div class="linkedin-badge">
+              <div class="linkedin-logo" aria-hidden="true">in</div>
+              <div class="linkedin-meta">
+                <p class="linkedin-name">Pashupati Mishra</p>
+                <a class="linkedin-handle" href="https://www.linkedin.com/in/pashupati-mishra/" target="_blank" rel="noopener noreferrer">linkedin.com/in/pashupati-mishra</a>
+              </div>
+            </div>
+            <div class="linkedin-actions">
+              <a class="pill" href="https://www.linkedin.com/in/pashupati-mishra/" target="_blank" rel="noopener noreferrer">Connect</a>
+              <a class="pill pill-share" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.linkedin.com%2Fin%2Fpashupati-mishra%2F" target="_blank" rel="noopener noreferrer">Share as post</a>
+            </div>
           </div>
         </div>
         <div class="hero-art" aria-hidden="true">
