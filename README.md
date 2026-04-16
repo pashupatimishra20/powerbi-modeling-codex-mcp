@@ -115,6 +115,11 @@ Then rebuild the summary index if needed.
 - NPM: https://www.npmjs.com/package/@microsoft/powerbi-modeling-mcp
 - Troubleshooting: https://github.com/microsoft/powerbi-modeling-mcp/blob/main/TROUBLESHOOTING.md
 
+## Maintainer
+
+- Pashupati Mishra
+- LinkedIn: https://www.linkedin.com/in/pashupati-mishra/
+
 ## Notes
 
 - This plugin focuses on semantic model operations (tables, columns, measures, relationships, DAX query, etc.).
