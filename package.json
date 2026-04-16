@@ -1,6 +1,6 @@
 {
   "name": "powerbi-modeling-codex-mcp",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "Codex plugin wrapper for Power BI semantic model and PBIR report authoring MCP workflows.",

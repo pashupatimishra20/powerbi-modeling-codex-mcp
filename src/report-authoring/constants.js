@@ -1,5 +1,5 @@
 export const REPORT_PROJECT_SERVER_NAME = "powerbi-report-authoring-mcp";
-export const REPORT_PROJECT_SERVER_VERSION = "0.6.0";
+export const REPORT_PROJECT_SERVER_VERSION = "0.7.0";
 
 export const SCHEMA_URLS = {
   definitionProperties:
@@ -14,10 +14,14 @@ export const SCHEMA_URLS = {
     "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
   visual:
     "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  visualMobileState:
+    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainerMobileState/1.0.0/schema.json",
   bookmark:
     "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/1.0.0/schema.json",
   bookmarks:
-    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json"
+    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json",
+  reportExtension:
+    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/reportExtension/1.0.0/schema.json"
 };
 
 export const DEFAULT_PAGE_SIZE = {
@@ -70,8 +74,13 @@ export const SUPPORTED_VISUAL_TYPES = [
   "matrix",
   "clusteredBarChart",
   "clusteredColumnChart",
+  "stackedBarChart",
+  "stackedColumnChart",
   "lineChart",
+  "areaChart",
+  "lineAndClusteredColumnChart",
   "pieChart",
+  "donutChart",
   "slicer",
   "textbox",
   "actionButton"
@@ -81,7 +90,11 @@ export const SUPPORTED_CONTROL_TYPES = [
   "backButton",
   "bookmarkButton",
   "drillthroughButton",
-  "bookmarkNavigator"
+  "bookmarkNavigator",
+  "pageNavigationButton",
+  "pageNavigator",
+  "applyAllSlicersButton",
+  "clearAllSlicersButton"
 ];
 
 export const TOOL_DEFINITIONS = {
@@ -127,11 +140,18 @@ export const TOOL_DEFINITIONS = {
   },
   report_interaction_operations: {
     description:
-      "Configure PBIR drillthrough, slicer sync, and interactive controls. Supported operations: ConfigureDrillthroughPage, ClearDrillthroughPage, SetSlicerSync, CreateControl, UpdateControl.",
+      "Configure PBIR drillthrough, tooltips, visual interactions, slicer sync, and interactive controls. Supported operations: ConfigureDrillthroughPage, ClearDrillthroughPage, ConfigureTooltipPage, ClearTooltipPage, AssignTooltip, SetVisualInteractions, SetSlicerSync, CreatePageNavigationButton, CreatePageNavigator, CreateSlicerActionButton, CreateControl, UpdateControl.",
     operations: [
       "ConfigureDrillthroughPage",
       "ClearDrillthroughPage",
+      "ConfigureTooltipPage",
+      "ClearTooltipPage",
+      "AssignTooltip",
+      "SetVisualInteractions",
       "SetSlicerSync",
+      "CreatePageNavigationButton",
+      "CreatePageNavigator",
+      "CreateSlicerActionButton",
       "CreateControl",
       "UpdateControl"
     ]
@@ -140,6 +160,11 @@ export const TOOL_DEFINITIONS = {
     description:
       "Orchestrate Power BI field parameters across the semantic model MCP and PBIR report. Supported operations: List, Create, Update, Delete, BindVisual, CreateSlicerControl.",
     operations: ["List", "Create", "Update", "Delete", "BindVisual", "CreateSlicerControl"]
+  },
+  report_mobile_layout_operations: {
+    description:
+      "Author PBIR visual mobile layout metadata. Supported operations: List, Get, AutoCreateFromDesktop, PlaceVisual, UpdateVisual, RemoveVisual, Clear.",
+    operations: ["List", "Get", "AutoCreateFromDesktop", "PlaceVisual", "UpdateVisual", "RemoveVisual", "Clear"]
   }
 };
 
@@ -291,6 +316,7 @@ export const TOOL_SCHEMAS = {
           action: { type: ["object", "null"] },
           title: { type: ["string", "null"] },
           fieldRefs: { type: ["array", "null"], items: { type: "string" } },
+          fieldDisplayNames: { type: ["array", "null"], items: { type: "string" } },
           acceptsFilterContext: { type: ["string", "boolean", "null"] },
           autoCreateBackButton: { type: ["boolean", "null"] },
           hidden: { type: ["boolean", "null"] },
@@ -299,8 +325,35 @@ export const TOOL_SCHEMAS = {
           syncFilterChanges: { type: ["boolean", "null"] },
           bookmarkName: { type: ["string", "null"] },
           drillthroughPageName: { type: ["string", "null"] },
+          tooltipPageName: { type: ["string", "null"] },
+          targetPageName: { type: ["string", "null"] },
           deselectionBookmarkName: { type: ["string", "null"] },
-          orientation: { type: ["string", "null"] }
+          orientation: { type: ["string", "null"] },
+          showHiddenPages: { type: ["boolean", "null"] },
+          showTooltipPages: { type: ["boolean", "null"] },
+          sourceVisualName: { type: ["string", "null"] },
+          targetVisualName: { type: ["string", "null"] },
+          interactionType: { type: ["string", "null"] },
+          drillingFiltersOtherVisuals: { type: ["boolean", "null"] },
+          replaceExisting: { type: ["boolean", "null"] },
+          spacing: { type: ["number", "integer", "null"] },
+          slicerAction: {
+            type: ["string", "null"],
+            enum: ["ApplyAllSlicers", "ClearAllSlicers", null]
+          },
+          interactions: {
+            type: ["array", "null"],
+            items: {
+              type: "object",
+              properties: {
+                sourceVisualName: { type: "string" },
+                targetVisualName: { type: "string" },
+                interactionType: { type: "string" }
+              },
+              required: ["sourceVisualName", "targetVisualName", "interactionType"],
+              additionalProperties: true
+            }
+          }
         },
         required: ["operation"],
         additionalProperties: true
@@ -342,6 +395,30 @@ export const TOOL_SCHEMAS = {
               additionalProperties: true
             }
           }
+        },
+        required: ["operation"],
+        additionalProperties: true
+      }
+    },
+    required: ["request"],
+    additionalProperties: false
+  },
+  report_mobile_layout_operations: {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: TOOL_DEFINITIONS.report_mobile_layout_operations.operations
+          },
+          ...sharedRequestProperties,
+          pageName: { type: ["string", "null"] },
+          visualName: { type: ["string", "null"] },
+          layout: { type: ["object", "null"] },
+          format: { type: ["object", "null"] },
+          autoPosition: { type: ["boolean", "null"] }
         },
         required: ["operation"],
         additionalProperties: true

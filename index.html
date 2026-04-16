@@ -362,6 +362,10 @@
             create measures, manage relationships, validate DAX, and troubleshoot model changes.
           </p>
           <p>
+            Phase 3 also extends local PBIR authoring with tooltip pages, page navigation, apply/clear slicers actions,
+            visual interaction rules, richer chart coverage, hierarchy slicers, and mobile layout metadata.
+          </p>
+          <p>
             Built on Microsoft's official Power BI Modeling MCP server:
             <a href="https://github.com/microsoft/powerbi-modeling-mcp" target="_blank" rel="noopener noreferrer">github.com/microsoft/powerbi-modeling-mcp</a>
           </p>
@@ -422,8 +426,20 @@
           <li>List/edit tables, columns, measures, and relationships.</li>
           <li>Run DAX validation/execution and model refresh operations.</li>
           <li>Export/import model artifacts via TMDL or BIM operations.</li>
-          <li>Open PBIR/PBIP projects and create pages, visuals, and field bindings from Codex.</li>
+          <li>Open PBIR/PBIP projects and create pages, visuals, bookmarks, drillthrough, tooltips, and field bindings from Codex.</li>
+          <li>Author page navigators, slicer action buttons, visual interaction matrices, and `mobile.json` layouts.</li>
           <li>Install the whole integration as a Codex plugin with one GitHub command.</li>
+        </ul>
+      </article>
+
+      <article class="card wide reveal">
+        <h2>Phase 3 Report Authoring</h2>
+        <ul>
+          <li>Tooltip pages and visual-to-tooltip assignment using real PBIR page bindings.</li>
+          <li>Page navigation buttons and generated page navigators that follow report page order.</li>
+          <li>Apply all slicers and Clear all slicers controls for page-wide slicer state changes.</li>
+          <li>Per-visual interaction matrices for filter, highlight, and none behavior.</li>
+          <li>Additional visual types, hierarchy slicers, and mobile layout metadata through per-visual <code>mobile.json</code>.</li>
         </ul>
       </article>
 
@@ -437,7 +453,7 @@
         <ul>
           <li>Codex plugin manifest and MCP wiring so the server can be installed and discovered as a Codex plugin.</li>
           <li>Codex skill instructions that map natural-language requests to the right semantic-model and report-authoring operations.</li>
-          <li>A local <code>powerbi-report-authoring-mcp</code> server for PBIR/PBIP pages, visuals, bookmarks, drillthrough, slicer sync, field-parameter wiring, and interactive controls.</li>
+          <li>A local <code>powerbi-report-authoring-mcp</code> server for PBIR/PBIP pages, visuals, bookmarks, drillthrough, tooltip pages, slicer sync, visual interactions, mobile layouts, field-parameter wiring, and interactive controls.</li>
           <li>Clean install, uninstall, and reinstall scripts for <code>~/plugins</code>, <code>~/.agents/plugins/marketplace.json</code>, and <code>~/.codex/skills</code>.</li>
           <li>A fallback Node client for listing tools, calling <code>HELP</code>, and troubleshooting outside the Codex UI.</li>
           <li>GitHub Pages documentation and copy-ready commands for end users.</li>
@@ -466,7 +482,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-local.ps1</div>
         <div class="code">USE powerbi-modeling-mcp Connect to 'CVs.pbix' in Power BI Desktop
 USE powerbi-modeling-mcp list tables
 USE powerbi-modeling-mcp create a measure to count inactive candidates
-USE powerbi-modeling-mcp open my PBIR project and create a clustered column chart on a new page</div>
+USE powerbi-modeling-mcp open my PBIR project and create a clustered column chart on a new page
+USE powerbi-modeling-mcp configure a tooltip page and assign it to a chart
+USE powerbi-modeling-mcp create a page navigator and apply-all-slicers button
+USE powerbi-modeling-mcp auto-create mobile layout metadata for my Overview page</div>
       </article>
 
       <article class="card reveal" id="support">

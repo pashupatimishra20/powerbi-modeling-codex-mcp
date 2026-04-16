@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "TooltipPage",
+  "displayName": "Tooltip Page",
+  "displayOption": "ActualSize",
+  "height": 180,
+  "width": 320,
+  "visibility": "HiddenInViewMode",
+  "pageBinding": {
+    "name": "TooltipPage_Tooltip",
+    "type": "Tooltip",
+    "parameters": []
+  }
+}

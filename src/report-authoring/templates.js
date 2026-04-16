@@ -12,6 +12,10 @@ const TEMPLATE_FILES = {
   backButton: "backButton.visual.json",
   bookmarkButton: "bookmarkButton.visual.json",
   bookmarkNavigator: "bookmarkNavigator.visual.json",
+  pageNavigationButton: "pageNavigationButton.visual.json",
+  pageNavigator: "pageNavigator.visual.json",
+  applyAllSlicersButton: "applyAllSlicersButton.visual.json",
+  clearAllSlicersButton: "clearAllSlicersButton.visual.json",
   card: "card.visual.json",
   multiRowCard: "multiRowCard.visual.json",
   tableEx: "tableEx.visual.json",
@@ -98,9 +102,19 @@ export function getVisualTemplate(visualType) {
     }
     case "clusteredBarChart":
       return deepClone(templates.clusteredBarChart);
+    case "stackedBarChart": {
+      const template = deepClone(templates.clusteredBarChart);
+      template.visual.visualType = "stackedBarChart";
+      return template;
+    }
     case "clusteredColumnChart": {
       const template = deepClone(templates.columnChart);
       template.visual.visualType = "clusteredColumnChart";
+      return template;
+    }
+    case "stackedColumnChart": {
+      const template = deepClone(templates.columnChart);
+      template.visual.visualType = "stackedColumnChart";
       return template;
     }
     case "lineChart": {
@@ -108,8 +122,23 @@ export function getVisualTemplate(visualType) {
       template.visual.visualType = "lineChart";
       return template;
     }
+    case "areaChart": {
+      const template = deepClone(templates.columnChart);
+      template.visual.visualType = "areaChart";
+      return template;
+    }
+    case "lineAndClusteredColumnChart": {
+      const template = deepClone(templates.columnChart);
+      template.visual.visualType = "lineAndClusteredColumnChart";
+      return template;
+    }
     case "pieChart":
       return deepClone(templates.pieChart);
+    case "donutChart": {
+      const template = deepClone(templates.pieChart);
+      template.visual.visualType = "donutChart";
+      return template;
+    }
     case "slicer":
       return deepClone(templates.slicer);
     case "textbox":

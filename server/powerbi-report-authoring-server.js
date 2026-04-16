@@ -17,6 +17,7 @@ import {
   handleBookmarkOperation,
   handleFieldParameterOperation,
   handleInteractionOperation,
+  handleMobileLayoutOperation,
   handlePageOperation,
   handleProjectOperation,
   handleVisualOperation
@@ -45,6 +46,8 @@ async function dispatchTool(name, args) {
       return handleInteractionOperation(request);
     case "report_field_parameter_operations":
       return handleFieldParameterOperation(request);
+    case "report_mobile_layout_operations":
+      return handleMobileLayoutOperation(request);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

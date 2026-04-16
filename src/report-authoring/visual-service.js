@@ -7,6 +7,7 @@ import { readJson, writeJson } from "./json.js";
 import {
   booleanLiteral,
   ensureArrayObject,
+  getAnnotation,
   numberLiteral,
   quoteLiteral
 } from "./format-utils.js";
@@ -139,12 +140,18 @@ function getDefaultRoleBindings(visualType) {
     case "actionButton":
       return {};
     case "pieChart":
+    case "donutChart":
     case "clusteredBarChart":
+    case "stackedBarChart":
     case "clusteredColumnChart":
+    case "stackedColumnChart":
     case "lineChart":
+    case "areaChart":
+    case "lineAndClusteredColumnChart":
       return {
         Category: ["category", "categories", "legend", "x"],
-        Y: ["values", "value", "y"]
+        Y: ["values", "value", "y", "columnValues"],
+        Y2: ["lineValues", "secondaryValues", "lineY"]
       };
     default:
       return {
@@ -189,7 +196,7 @@ function shouldAggregateRole(roleName, visualType) {
     return false;
   }
 
-  return roleName === "Y" || (roleName === "Values" && visualType !== "multiRowCard");
+  return roleName === "Y" || roleName === "Y2" || (roleName === "Values" && visualType !== "multiRowCard");
 }
 
 function buildProjection(fieldRef, semanticModel, aggregateColumns) {
@@ -414,9 +421,16 @@ export async function setVisualFormatting(project, request) {
 }
 
 export async function deleteVisual(project, request) {
+  const existing = getVisual(project, request.pageName, request.visualName);
   const targetDir = visualDir(project, request.pageName, request.visualName);
   ensureExists(fs.existsSync(targetDir), `Visual not found: ${request.pageName}/${request.visualName}`);
   fs.rmSync(targetDir, { recursive: true, force: true });
+
+  if (getAnnotation(existing, "codex.controlType")) {
+    const { refreshApplyAllSlicersSetting } = await import("./interaction-service.js");
+    await refreshApplyAllSlicersSetting(project);
+  }
+
   return {
     deletedVisualName: request.visualName,
     visuals: listVisuals(project, request.pageName)

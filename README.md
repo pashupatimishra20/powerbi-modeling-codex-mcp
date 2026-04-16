@@ -1,6 +1,12 @@
 # Power BI Modeling MCP for Codex
 
-A Codex plugin and standalone Codex skill bundle that integrate the official Microsoft Power BI Modeling MCP server and add a local PBIR report-authoring MCP for page and visual creation workflows.
+A Codex plugin and standalone Codex skill bundle that integrate the official Microsoft Power BI Modeling MCP server and add a local PBIR report-authoring MCP for page, visual, and interactive report authoring workflows.
+
+## Current Release
+
+- Version: `0.7.0`
+- Milestone: `Phase 3 - Local PBIR UX Parity and Authoring Breadth`
+- Highlights: tooltip pages, page navigation, apply/clear slicers buttons, visual interaction matrices, added chart coverage, hierarchy slicers, and per-visual mobile layout metadata
 
 ## Upstream Acknowledgment
 
@@ -102,6 +108,9 @@ After install, restart Codex desktop so the plugin and bundled standalone skills
 - `USE powerbi-modeling-mcp create a bookmark group and add bookmark buttons on the Overview page`
 - `USE powerbi-modeling-mcp configure a drillthrough page on Category and add a back button`
 - `USE powerbi-modeling-mcp create a field parameter for Category, Month, and Net Sales and wire it to a slicer`
+- `USE powerbi-modeling-mcp configure a tooltip page and assign it to a chart`
+- `USE powerbi-modeling-mcp create a page navigator and apply-all-slicers button on Executive Summary`
+- `USE powerbi-modeling-mcp auto-create mobile layout metadata for my Overview page`
 
 ## Regenerate operations catalog
 
@@ -144,10 +153,11 @@ The local report-authoring MCP adds these tool families:
 - `report_page_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `Duplicate`
 - `report_visual_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Duplicate`, `Move`, `BindFields`, `SetFormatting`
 - `report_bookmark_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`
-- `report_interaction_operations`: `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `SetSlicerSync`, `CreateControl`, `UpdateControl`
+- `report_interaction_operations`: `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `ConfigureTooltipPage`, `ClearTooltipPage`, `AssignTooltip`, `SetVisualInteractions`, `SetSlicerSync`, `CreatePageNavigationButton`, `CreatePageNavigator`, `CreateSlicerActionButton`, `CreateControl`, `UpdateControl`
 - `report_field_parameter_operations`: `List`, `Create`, `Update`, `Delete`, `BindVisual`, `CreateSlicerControl`
+- `report_mobile_layout_operations`: `List`, `Get`, `AutoCreateFromDesktop`, `PlaceVisual`, `UpdateVisual`, `RemoveVisual`, `Clear`
 
-Phase 2 interactive authoring now supports:
+Phase 3 local PBIR authoring now supports:
 
 - `card`
 - `multiRowCard`
@@ -155,12 +165,30 @@ Phase 2 interactive authoring now supports:
 - `matrix`
 - `clusteredBarChart`
 - `clusteredColumnChart`
+- `stackedBarChart`
+- `stackedColumnChart`
 - `lineChart`
+- `areaChart`
+- `lineAndClusteredColumnChart`
 - `pieChart`
+- `donutChart`
 - `slicer`
 - `textbox`
 - true report bookmarks and bookmark groups
 - drillthrough page binding and drillthrough buttons
+- tooltip pages and visual-to-tooltip assignment
+- page navigation buttons and generated page navigators that sync with `pages.json`
+- per-visual interaction matrices and drilling-filters-other-visuals configuration
 - slicer sync groups
-- back, bookmark, and drillthrough buttons plus generated bookmark navigators
+- apply-all-slicers and clear-all-slicers buttons
+- back, bookmark, drillthrough, and page-navigation buttons plus generated bookmark/page navigators
+- mobile layout authoring through per-visual `mobile.json` files
 - field-parameter orchestration through the official modeling MCP with local PBIR wiring
+
+Typical phase-3 workflows:
+
+- create a tooltip page and assign it to one or more visuals
+- create a page navigator that stays in sync with page rename, reorder, hide, and duplicate operations
+- add apply-all-slicers and clear-all-slicers buttons for page-wide slicer control
+- author explicit source-to-target visual interaction rules on a report page
+- generate or update `mobile.json` layout metadata for PBIR visuals

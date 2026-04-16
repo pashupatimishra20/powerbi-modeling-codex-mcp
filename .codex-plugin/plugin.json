@@ -1,6 +1,6 @@
 {
   "name": "powerbi-modeling-codex",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Codex plugin for operating Power BI semantic models and PBIR report projects through the official modeling MCP plus a local report authoring MCP.",
   "author": {
     "name": "KB461VT",
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Power BI Modeling MCP",
     "shortDescription": "Connect and edit Power BI semantic models from Codex",
-    "longDescription": "Provides a Codex skill and local MCP wiring for Power BI semantic model operations plus PBIR report authoring workflows, including pages, visuals, bookmarks, drillthrough, slicer sync, field-parameter wiring, and interactive controls.",
+    "longDescription": "Provides a Codex skill and local MCP wiring for Power BI semantic model operations plus PBIR report authoring workflows, including pages, visuals, bookmarks, drillthrough, tooltip pages, visual interactions, slicer sync, field-parameter wiring, mobile layouts, and interactive controls.",
     "developerName": "Local Plugin",
     "category": "Productivity",
     "capabilities": [
@@ -37,8 +37,9 @@
       "Connect to my PBIX in Power BI Desktop and list tables/columns.",
       "Create or update a DAX measure using measure_operations.",
       "Open my PBIR project and create a clustered column chart on a new page.",
-      "Configure a drillthrough page, bookmark buttons, or synced slicers in my PBIR report.",
-      "Create a field parameter and bind it to a report visual.",
+      "Configure a drillthrough page, tooltip page, page navigator, or synced slicers in my PBIR report.",
+      "Create a field parameter and bind it to a report visual or slicer.",
+      "Generate or edit mobile layout metadata for visuals in my PBIR report.",
       "Validate model and report changes and summarize what was modified."
     ],
     "brandColor": "#f2c811"

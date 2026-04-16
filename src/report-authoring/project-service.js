@@ -73,6 +73,10 @@ export function reportFile(project) {
   return path.join(project.definitionRoot, "report.json");
 }
 
+export function reportExtensionsFile(project) {
+  return path.join(project.definitionRoot, "reportExtensions.json");
+}
+
 export function versionFile(project) {
   return path.join(project.definitionRoot, "version.json");
 }
@@ -103,6 +107,10 @@ export function visualDir(project, pageName, visualName) {
 
 export function visualFile(project, pageName, visualName) {
   return path.join(visualDir(project, pageName, visualName), "visual.json");
+}
+
+export function visualMobileStateFile(project, pageName, visualName) {
+  return path.join(visualDir(project, pageName, visualName), "mobile.json");
 }
 
 export function bookmarkRoot(project) {
@@ -151,6 +159,12 @@ export function listVisualNames(project, pageName) {
   );
 }
 
+export function listMobileVisualNames(project, pageName) {
+  return listSubdirectories(pageVisualRoot(project, pageName)).filter((name) =>
+    fs.existsSync(visualMobileStateFile(project, pageName, name))
+  );
+}
+
 export function listBookmarkNames(project) {
   return listFiles(bookmarkRoot(project), ".bookmark.json").map((fileName) =>
     fileName.replace(/\.bookmark\.json$/i, "")
@@ -172,6 +186,14 @@ export function getPagesMetadata(project) {
 
 export function writePagesMetadata(project, pagesMetadata) {
   writeJson(pagesMetadataFile(project), pagesMetadata);
+}
+
+export function getReportDefinition(project) {
+  return readJson(reportFile(project));
+}
+
+export function writeReportDefinition(project, reportDefinition) {
+  writeJson(reportFile(project), reportDefinition);
 }
 
 export function getBookmarksMetadata(project) {
@@ -254,6 +276,7 @@ function getProjectFilesForValidation(project) {
   const files = [
     definitionPbirFile(project),
     reportFile(project),
+    reportExtensionsFile(project),
     versionFile(project),
     pagesMetadataFile(project),
     bookmarksMetadataFile(project)
@@ -263,6 +286,10 @@ function getProjectFilesForValidation(project) {
     files.push(pageFile(project, pageName));
     for (const visualName of listVisualNames(project, pageName)) {
       files.push(visualFile(project, pageName, visualName));
+      const mobileStatePath = visualMobileStateFile(project, pageName, visualName);
+      if (fs.existsSync(mobileStatePath)) {
+        files.push(mobileStatePath);
+      }
     }
   }
 
@@ -271,6 +298,11 @@ function getProjectFilesForValidation(project) {
   }
 
   return files;
+}
+
+async function syncPageNavigators(project) {
+  const { syncGeneratedPageNavigators } = await import("./interaction-service.js");
+  await syncGeneratedPageNavigators(project);
 }
 
 export async function validateProject(project) {
@@ -358,6 +390,10 @@ export async function createPage(project, request) {
     };
   }
 
+  if (request.duplicateFromPage && pageDefinition.pageBinding?.name) {
+    pageDefinition.pageBinding.name = `${name}_${pageDefinition.pageBinding.type || "Binding"}`;
+  }
+
   writeJson(pageFile(project, name), pageDefinition);
 
   const pagesMetadata = getPagesMetadata(project);
@@ -373,6 +409,8 @@ export async function createPage(project, request) {
   if (!validation.valid) {
     throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
   }
+
+  await syncPageNavigators(project);
 
   return getPage(project, name);
 }
@@ -419,6 +457,8 @@ export async function updatePage(project, request) {
     throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
   }
 
+  await syncPageNavigators(project);
+
   return getPage(project, request.pageName);
 }
 
@@ -438,6 +478,8 @@ export async function deletePage(project, request) {
   if (!validation.valid) {
     throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
   }
+
+  await syncPageNavigators(project);
 
   return {
     deletedPageName: request.pageName,
@@ -460,6 +502,8 @@ export async function reorderPages(project, request) {
   if (!validation.valid) {
     throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
   }
+
+  await syncPageNavigators(project);
 
   return {
     pageOrder: pagesMetadata.pageOrder

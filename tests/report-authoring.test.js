@@ -25,11 +25,24 @@ import {
 } from "../src/report-authoring/field-parameter-service.js";
 import {
   clearDrillthroughPage,
+  clearTooltipPage,
+  configureTooltipPage,
   configureDrillthroughPage,
+  assignTooltip,
   createControl,
+  setVisualInteractions,
   setSlicerSync,
   updateControl
 } from "../src/report-authoring/interaction-service.js";
+import {
+  autoCreateMobileLayout,
+  clearMobileLayout,
+  getMobileLayout,
+  listMobileLayouts,
+  placeMobileVisual,
+  removeMobileVisual,
+  updateMobileVisual
+} from "../src/report-authoring/mobile-layout-service.js";
 import {
   resetModelingClientFactory,
   setModelingClientFactory
@@ -37,9 +50,14 @@ import {
 import {
   createBlankProjectFixture,
   createPage,
+  duplicatePage,
   getPage,
   listPages,
+  listVisualNames,
   openProject,
+  reorderPages,
+  reportFile,
+  updatePage,
   validateProject
 } from "../src/report-authoring/project-service.js";
 import {
@@ -67,6 +85,17 @@ function copyFixtureProject(reportFolder = "SalesReport.Report") {
   };
 }
 
+function getAnnotationValue(definition, name) {
+  return definition.annotations?.find((annotation) => annotation.name === name)?.value ?? null;
+}
+
+function getNavigatorButtons(project, pageName, controlName) {
+  return listVisualNames(project, pageName)
+    .map((visualName) => getVisual(project, pageName, visualName))
+    .filter((definition) => getAnnotationValue(definition, "codex.navigatorName") === controlName)
+    .sort((left, right) => (left.position?.tabOrder || 0) - (right.position?.tabOrder || 0));
+}
+
 test("opens and validates the sample PBIR project", async () => {
   const { reportRoot } = copyFixtureProject();
   const project = openProject(reportRoot);
@@ -81,10 +110,12 @@ test("opens and validates the interactive PBIR fixture", async () => {
   const project = openProject(reportRoot);
   const validation = await validateProject(project);
   assert.equal(validation.valid, true);
-  assert.equal(listPages(project).length, 2);
+  assert.equal(listPages(project).length, 3);
   assert.equal(listBookmarks(project).length, 1);
   assert.equal(getPage(project, "Details").pageBinding.type, "Drillthrough");
+  assert.equal(getPage(project, "TooltipPage").pageBinding.type, "Tooltip");
   assert.equal(getVisual(project, "ReportSection", "CategorySyncSlicer").visual.syncGroup.groupName, "CategoryPages");
+  assert.equal(listMobileLayouts(project, "ReportSection").length, 1);
 });
 
 test("opens a PBIP manifest by resolving its report artifact", () => {
@@ -149,9 +180,22 @@ test("creates, updates, duplicates, moves, and deletes visuals across supported 
     { visualType: "matrix", bindings: { values: ["Sales[Category]", "[Total Sales]"] } },
     { visualType: "clusteredBarChart", bindings: { category: ["Sales[Category]"], values: ["Sales[Amount]"] } },
     { visualType: "clusteredColumnChart", bindings: { category: ["Sales[Category]"], values: ["[Total Sales]"] } },
+    { visualType: "stackedBarChart", bindings: { category: ["Sales[Category]"], values: ["Sales[Amount]"] } },
+    { visualType: "stackedColumnChart", bindings: { category: ["Sales[Category]"], values: ["[Total Sales]"] } },
     { visualType: "lineChart", bindings: { category: ["Date[Month]"], values: ["[Total Sales]"] } },
+    { visualType: "areaChart", bindings: { category: ["Date[Month]"], values: ["[Net Sales]"] } },
+    {
+      visualType: "lineAndClusteredColumnChart",
+      bindings: {
+        category: ["Date[Month]"],
+        columnValues: ["[Total Sales]"],
+        lineValues: ["[Net Sales]"]
+      }
+    },
     { visualType: "pieChart", bindings: { category: ["Sales[Category]"], values: ["[Total Sales]"] } },
+    { visualType: "donutChart", bindings: { category: ["Sales[Category]"], values: ["[Net Sales]"] } },
     { visualType: "slicer", bindings: { values: ["Sales[Category]"] } },
+    { visualType: "slicer", bindings: { values: ["Date[Calendar].[Month]"] } },
     { visualType: "textbox", bindings: {}, textValue: "Executive summary" }
   ];
 
@@ -200,7 +244,7 @@ test("creates, updates, duplicates, moves, and deletes visuals across supported 
 
   const rebound = await bindVisualFields(project, {
     pageName: "GeneratedPage",
-    visualName: created[6].name,
+    visualName: created[8].name,
     bindings: {
       category: ["Date[Month]"],
       values: ["[Net Sales]"]
@@ -368,6 +412,169 @@ test("configures drillthrough, slicer sync, and interactive controls", async () 
     pageName: "Details"
   });
   assert.equal(cleared.pageBinding, undefined);
+});
+
+test("configures tooltip pages, visual interactions, slicer action buttons, and mobile layouts", async () => {
+  const { reportRoot } = copyFixtureProject();
+  const project = openProject(reportRoot);
+
+  await createPage(project, {
+    pageName: "TooltipPage",
+    displayName: "Tooltip Page"
+  });
+
+  const chart = await createVisual(project, {
+    pageName: "ReportSection",
+    name: "SalesArea",
+    visualType: "areaChart",
+    bindings: {
+      category: ["Date[Month]"],
+      values: ["[Total Sales]"]
+    }
+  });
+
+  const configuredTooltip = await configureTooltipPage(project, {
+    pageName: "TooltipPage",
+    fieldRefs: ["Sales[Category]"]
+  });
+  assert.equal(configuredTooltip.pageBinding.type, "Tooltip");
+  assert.equal(configuredTooltip.visibility, "HiddenInViewMode");
+
+  const tooltipAssigned = await assignTooltip(project, {
+    pageName: "ReportSection",
+    visualName: chart.name,
+    tooltipPageName: "TooltipPage"
+  });
+  assert.equal(
+    tooltipAssigned.visual.visualContainerObjects.visualTooltip[0].properties.section.expr.Literal.Value,
+    "'TooltipPage'"
+  );
+
+  const interactionResult = await setVisualInteractions(project, {
+    pageName: "ReportSection",
+    sourceVisualName: chart.name,
+    targetVisualName: chart.name,
+    interactionType: "none",
+    drillingFiltersOtherVisuals: true
+  });
+  assert.equal(interactionResult.page.visualInteractions[0].type, "NoFilter");
+  assert.equal(interactionResult.sourceVisual.visual.drillFilterOtherVisuals, true);
+
+  await createControl(project, {
+    pageName: "ReportSection",
+    controlType: "applyAllSlicersButton",
+    controlName: "ApplySlicers"
+  });
+  await createControl(project, {
+    pageName: "ReportSection",
+    controlType: "clearAllSlicersButton",
+    controlName: "ClearSlicers"
+  });
+
+  const reportDefinition = JSON.parse(fs.readFileSync(reportFile(project), "utf8"));
+  assert.equal(reportDefinition.slowDataSourceSettings.isApplyAllButtonEnabled, true);
+
+  const placed = await placeMobileVisual(project, {
+    pageName: "ReportSection",
+    visualName: chart.name,
+    layout: { x: 8, y: 12, width: 304, height: 140 }
+  });
+  assert.equal(placed.position.width, 304);
+
+  const updated = await updateMobileVisual(project, {
+    pageName: "ReportSection",
+    visualName: chart.name,
+    layout: { x: 10, y: 20, width: 280, height: 150 },
+    format: { title: "Mobile title" }
+  });
+  assert.equal(updated.position.x, 10);
+
+  const fetched = getMobileLayout(project, {
+    pageName: "ReportSection",
+    visualName: chart.name
+  });
+  assert.equal(fetched.position.height, 150);
+
+  const autoCreated = await autoCreateMobileLayout(project, {
+    pageName: "ReportSection"
+  });
+  assert.ok(autoCreated.length >= 1);
+
+  const removed = await removeMobileVisual(project, {
+    pageName: "ReportSection",
+    visualName: chart.name
+  });
+  assert.equal(removed.mobileLayouts.some((layout) => layout.visualName === chart.name), false);
+
+  const clearedMobile = await clearMobileLayout(project, {
+    pageName: "ReportSection"
+  });
+  assert.equal(clearedMobile.mobileLayouts.length, 0);
+
+  await clearTooltipPage(project, {
+    pageName: "TooltipPage"
+  });
+  const tooltipCleared = getVisual(project, "ReportSection", chart.name);
+  assert.equal(tooltipCleared.visual.visualContainerObjects.visualTooltip, undefined);
+});
+
+test("keeps generated page navigators in sync with page mutations", async () => {
+  const { reportRoot } = copyFixtureProject();
+  const project = openProject(reportRoot);
+
+  const navigator = await createControl(project, {
+    pageName: "ReportSection",
+    controlType: "pageNavigator",
+    controlName: "MainPages",
+    layout: { x: 0, y: 0, width: 120, height: 36 }
+  });
+  assert.equal(navigator.visuals.length, 1);
+
+  await createPage(project, {
+    pageName: "Trends",
+    displayName: "Trends"
+  });
+  assert.equal(getNavigatorButtons(project, "ReportSection", "MainPages").length, 2);
+
+  await updatePage(project, {
+    pageName: "Trends",
+    displayName: "Trend Page"
+  });
+  assert.equal(
+    getNavigatorButtons(project, "ReportSection", "MainPages")[1].visual.visualContainerObjects.title[0].properties.text.expr.Literal.Value,
+    "'Trend Page'"
+  );
+
+  await duplicatePage(project, {
+    pageName: "Trends",
+    targetPageName: "TrendsCopy",
+    displayName: "Trends Copy"
+  });
+  assert.equal(getNavigatorButtons(project, "ReportSection", "MainPages").length, 3);
+
+  await reorderPages(project, {
+    pageOrder: ["TrendsCopy", "ReportSection", "Trends"]
+  });
+  const reordered = getNavigatorButtons(project, "ReportSection", "MainPages");
+  assert.equal(
+    reordered[0].visual.visualContainerObjects.title[0].properties.text.expr.Literal.Value,
+    "'Trends Copy'"
+  );
+
+  await updatePage(project, {
+    pageName: "Trends",
+    hidden: true
+  });
+  const afterHide = getNavigatorButtons(project, "ReportSection", "MainPages");
+  assert.equal(afterHide.length, 2);
+  assert.equal(
+    afterHide.some((definition) => {
+      const titleValue =
+        definition.visual.visualContainerObjects.title[0].properties.text.expr.Literal.Value;
+      return titleValue === "'Trend Page'";
+    }),
+    false
+  );
 });
 
 test("creates, updates, deletes, and binds field parameters via the modeling MCP wrapper", async () => {

@@ -20,11 +20,24 @@ import {
 } from "./field-parameter-service.js";
 import {
   clearDrillthroughPage,
+  clearTooltipPage,
+  configureTooltipPage,
   configureDrillthroughPage,
+  assignTooltip,
   createControl,
+  setVisualInteractions,
   setSlicerSync,
   updateControl
 } from "./interaction-service.js";
+import {
+  autoCreateMobileLayout,
+  clearMobileLayout,
+  getMobileLayout,
+  listMobileLayouts,
+  placeMobileVisual,
+  removeMobileVisual,
+  updateMobileVisual
+} from "./mobile-layout-service.js";
 import {
   createBlankProjectFixture,
   createPage,
@@ -188,11 +201,65 @@ export async function handleInteractionOperation(request) {
         operation: "ClearDrillthroughPage",
         page: await clearDrillthroughPage(project, request)
       };
+    case "ConfigureTooltipPage":
+      return {
+        success: true,
+        operation: "ConfigureTooltipPage",
+        page: await configureTooltipPage(project, request)
+      };
+    case "ClearTooltipPage":
+      return {
+        success: true,
+        operation: "ClearTooltipPage",
+        page: await clearTooltipPage(project, request)
+      };
+    case "AssignTooltip":
+      return {
+        success: true,
+        operation: "AssignTooltip",
+        visual: await assignTooltip(project, request)
+      };
+    case "SetVisualInteractions":
+      return {
+        success: true,
+        operation: "SetVisualInteractions",
+        result: await setVisualInteractions(project, request)
+      };
     case "SetSlicerSync":
       return {
         success: true,
         operation: "SetSlicerSync",
         visual: await setSlicerSync(project, request)
+      };
+    case "CreatePageNavigationButton":
+      return {
+        success: true,
+        operation: "CreatePageNavigationButton",
+        control: await createControl(project, {
+          ...request,
+          controlType: "pageNavigationButton"
+        })
+      };
+    case "CreatePageNavigator":
+      return {
+        success: true,
+        operation: "CreatePageNavigator",
+        control: await createControl(project, {
+          ...request,
+          controlType: "pageNavigator"
+        })
+      };
+    case "CreateSlicerActionButton":
+      return {
+        success: true,
+        operation: "CreateSlicerActionButton",
+        control: await createControl(project, {
+          ...request,
+          controlType:
+            request.slicerAction === "ClearAllSlicers"
+              ? "clearAllSlicersButton"
+              : "applyAllSlicersButton"
+        })
       };
     case "CreateControl":
       return {
@@ -235,6 +302,56 @@ export async function handleFieldParameterOperation(request) {
       };
     default:
       throw new Error(`Unsupported field parameter operation: ${request.operation}`);
+  }
+}
+
+export async function handleMobileLayoutOperation(request) {
+  const project = getProjectFromRequest(request);
+  switch (request.operation) {
+    case "List":
+      return {
+        success: true,
+        operation: "List",
+        mobileLayouts: listMobileLayouts(project, request.pageName)
+      };
+    case "Get":
+      return {
+        success: true,
+        operation: "Get",
+        mobileLayout: getMobileLayout(project, request)
+      };
+    case "AutoCreateFromDesktop":
+      return {
+        success: true,
+        operation: "AutoCreateFromDesktop",
+        mobileLayouts: await autoCreateMobileLayout(project, request)
+      };
+    case "PlaceVisual":
+      return {
+        success: true,
+        operation: "PlaceVisual",
+        mobileLayout: await placeMobileVisual(project, request)
+      };
+    case "UpdateVisual":
+      return {
+        success: true,
+        operation: "UpdateVisual",
+        mobileLayout: await updateMobileVisual(project, request)
+      };
+    case "RemoveVisual":
+      return {
+        success: true,
+        operation: "RemoveVisual",
+        ...await removeMobileVisual(project, request)
+      };
+    case "Clear":
+      return {
+        success: true,
+        operation: "Clear",
+        ...await clearMobileLayout(project, request)
+      };
+    default:
+      throw new Error(`Unsupported mobile layout operation: ${request.operation}`);
   }
 }
 
