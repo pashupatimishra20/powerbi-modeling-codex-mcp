@@ -86,7 +86,7 @@ try {
         throw "Clean install failed: $($_.Exception.Message)"
     }
 
-    Write-Step "Done. Restart Codex desktop to load the plugin and standalone skill into session context."
+    Write-Step "Done. Restart Codex desktop to load the plugin and bundled standalone skills into session context."
 }
 finally {
     if (-not $KeepTemp -and (Test-Path -LiteralPath $tempRoot)) {

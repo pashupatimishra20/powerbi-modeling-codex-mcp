@@ -205,6 +205,62 @@ function Copy-DirectoryChildren {
     }
 }
 
+function Get-BundledSkillDirectories {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SkillsRoot
+    )
+
+    if (-not (Test-Path -LiteralPath $SkillsRoot)) {
+        throw "Skills root does not exist: $SkillsRoot"
+    }
+
+    return @(
+        Get-ChildItem -LiteralPath $SkillsRoot -Directory | Sort-Object Name
+    )
+}
+
+function Install-BundledSkills {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceSkillsRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationSkillParent
+    )
+
+    $skillDirectories = Get-BundledSkillDirectories -SkillsRoot $SourceSkillsRoot
+    New-Item -ItemType Directory -Path $DestinationSkillParent -Force | Out-Null
+
+    $installedSkillPaths = @()
+    foreach ($skillDir in $skillDirectories) {
+        $destinationSkillPath = Join-Path $DestinationSkillParent $skillDir.Name
+        Remove-InstalledPath -Path $destinationSkillPath
+        Copy-DirectoryChildren -SourcePath $skillDir.FullName -DestinationPath $destinationSkillPath
+        $installedSkillPaths += $destinationSkillPath
+    }
+
+    return $installedSkillPaths
+}
+
+function Remove-BundledSkills {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourceSkillsRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationSkillParent
+    )
+
+    $skillDirectories = Get-BundledSkillDirectories -SkillsRoot $SourceSkillsRoot
+    $removedSkillPaths = @()
+    foreach ($skillDir in $skillDirectories) {
+        $destinationSkillPath = Join-Path $DestinationSkillParent $skillDir.Name
+        Remove-InstalledPath -Path $destinationSkillPath
+        $removedSkillPaths += $destinationSkillPath
+    }
+
+    return $removedSkillPaths
+}
+
 function Test-SameResolvedPath {
     param(
         [Parameter(Mandatory = $true)]

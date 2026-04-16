@@ -1,0 +1,7 @@
+interface:
+  display_name: "Power BI Dashboard Architect"
+  short_description: "Inspect models and architect dashboards"
+  default_prompt: "Use $powerbi-dashboard-architect to inspect this Power BI model and design a dashboard plan."
+
+policy:
+  allow_implicit_invocation: true

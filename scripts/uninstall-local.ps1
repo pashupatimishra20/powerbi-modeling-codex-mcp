@@ -10,9 +10,9 @@ $ErrorActionPreference = 'Stop'
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $scriptDir 'plugin-install-common.ps1')
 
+$pluginRoot = Resolve-Path (Join-Path $scriptDir '..')
 $destinationPluginPath = Join-Path $PluginParent $PluginName
-$standaloneSkillName = "powerbi-modeling-mcp"
-$destinationSkillPath = Join-Path $SkillParent $standaloneSkillName
+$sourceSkillsRoot = Join-Path $pluginRoot 'skills'
 $marketplaceSourcePath = "./plugins/$PluginName"
 
 Remove-PluginInstall `
@@ -21,9 +21,10 @@ Remove-PluginInstall `
     -PluginName $PluginName `
     -MarketplaceSourcePath $marketplaceSourcePath
 
-Remove-InstalledPath -Path $destinationSkillPath
+$removedSkillPaths = Remove-BundledSkills -SourceSkillsRoot $sourceSkillsRoot -DestinationSkillParent $SkillParent
 
 Write-Host "Removed plugin folder if present: $destinationPluginPath"
-Write-Host "Removed standalone skill folder if present: $destinationSkillPath"
+Write-Host "Removed bundled standalone skill folders if present:"
+$removedSkillPaths | ForEach-Object { Write-Host " - $_" }
 Write-Host "Removed marketplace entries for: $PluginName"
 Write-Host "Updated marketplace: $MarketplacePath"

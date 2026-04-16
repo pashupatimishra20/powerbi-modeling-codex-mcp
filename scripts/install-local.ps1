@@ -16,17 +16,15 @@ $pluginInfo = Get-PluginManifestInfo -PluginRoot $sourcePluginPath
 $pluginName = $pluginInfo.PluginName
 $marketplaceSourcePath = $pluginInfo.MarketplaceSourcePath
 $destinationPluginPath = Join-Path $PluginParent $pluginName
-$standaloneSkillName = 'powerbi-modeling-mcp'
-$sourceSkillPath = Join-Path $sourcePluginPath "skills\$standaloneSkillName"
-$destinationSkillPath = Join-Path $SkillParent $standaloneSkillName
+$sourceSkillsRoot = Join-Path $sourcePluginPath 'skills'
 $installInPlace = Test-SameResolvedPath -PathA $sourcePluginPath -PathB $destinationPluginPath
 
 if ($Force) {
     Write-Host "Compatibility note: -Force is accepted but no longer required. This installer now performs a clean reinstall by default."
 }
 
-if (-not (Test-Path -LiteralPath $sourceSkillPath)) {
-    throw "Standalone skill source not found at $sourceSkillPath"
+if (-not (Test-Path -LiteralPath $sourceSkillsRoot)) {
+    throw "Bundled skills root not found at $sourceSkillsRoot"
 }
 
 if ($installInPlace) {
@@ -65,16 +63,15 @@ if (Test-Path -LiteralPath $packageJsonPath) {
     }
 }
 
-Remove-InstalledPath -Path $destinationSkillPath
-New-Item -ItemType Directory -Path $SkillParent -Force | Out-Null
-Copy-DirectoryChildren -SourcePath $sourceSkillPath -DestinationPath $destinationSkillPath
+$installedSkillPaths = Install-BundledSkills -SourceSkillsRoot $sourceSkillsRoot -DestinationSkillParent $SkillParent
 
 $marketplace = Read-Marketplace -MarketplacePath $MarketplacePath
 $marketplace = Set-PluginMarketplaceEntry -Marketplace $marketplace -PluginName $pluginName -MarketplaceSourcePath $marketplaceSourcePath
 Write-Marketplace -MarketplacePath $MarketplacePath -Marketplace $marketplace
 
 Write-Host "Installed plugin path: $workingPluginPath"
-Write-Host "Installed standalone skill path: $destinationSkillPath"
+Write-Host "Installed bundled standalone skills:"
+$installedSkillPaths | ForEach-Object { Write-Host " - $_" }
 Write-Host "Updated marketplace: $MarketplacePath"
 Write-Host "Marketplace source path: $marketplaceSourcePath"
-Write-Host 'Restart Codex desktop to load the plugin and standalone skill into session context.'
+Write-Host 'Restart Codex desktop to load the plugin and bundled standalone skills into session context.'

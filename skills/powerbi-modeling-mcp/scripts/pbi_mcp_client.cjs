@@ -156,7 +156,7 @@ class McpClient {
       capabilities: {},
       clientInfo: {
         name: 'codex-powerbi-modeling-plugin',
-        version: '0.4.0'
+        version: '0.5.0'
       }
     });
 
