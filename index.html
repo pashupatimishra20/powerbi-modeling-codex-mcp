@@ -39,6 +39,7 @@
     body {
       margin: 0;
       padding: 0;
+      overflow-x: hidden;
       background:
         radial-gradient(circle at 12% 8%, rgba(255, 233, 185, 0.7), transparent 30%),
         radial-gradient(circle at 84% 0%, rgba(186, 236, 226, 0.75), transparent 28%),
@@ -70,6 +71,7 @@
     .shell {
       position: relative;
       z-index: 1;
+      width: min(100%, var(--content));
       max-width: var(--content);
       margin: 0 auto;
       padding: 24px 20px 80px;
@@ -135,6 +137,7 @@
       top: 92px;
       right: 18px;
       z-index: 4;
+      max-width: calc(100vw - 36px);
       width: min(274px, calc(100vw - 28px));
       display: grid;
       grid-template-columns: 48px minmax(0, 1fr);
