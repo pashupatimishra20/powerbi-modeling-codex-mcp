@@ -1,7 +1,7 @@
 {
   "name": "powerbi-modeling-codex",
-  "version": "0.1.0",
-  "description": "Codex plugin for operating Power BI semantic models through the official Power BI Modeling MCP server.",
+  "version": "0.3.0",
+  "description": "Codex plugin for operating Power BI semantic models and PBIR report projects through the official modeling MCP plus a local report authoring MCP.",
   "author": {
     "name": "KB461VT",
     "email": "kb461vt@example.com",
@@ -22,7 +22,7 @@
   "interface": {
     "displayName": "Power BI Modeling MCP",
     "shortDescription": "Connect and edit Power BI semantic models from Codex",
-    "longDescription": "Provides a Codex skill and local MCP wiring for full Power BI Modeling MCP operations, including connection, model metadata, tables, columns, measures, relationships, DAX queries, partitions, and governance objects.",
+    "longDescription": "Provides a Codex skill and local MCP wiring for Power BI semantic model operations plus PBIR report authoring workflows, including pages, visuals, field bindings, and basic formatting.",
     "developerName": "Local Plugin",
     "category": "Productivity",
     "capabilities": [
@@ -36,7 +36,8 @@
     "defaultPrompt": [
       "Connect to my PBIX in Power BI Desktop and list tables/columns.",
       "Create or update a DAX measure using measure_operations.",
-      "Validate model changes and summarize what was modified."
+      "Open my PBIR project and create a clustered column chart on a new page.",
+      "Validate model and report changes and summarize what was modified."
     ],
     "brandColor": "#f2c811"
   }

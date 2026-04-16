@@ -1,0 +1,106 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { deepClone } from "./json.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TEMPLATE_ROOT = path.resolve(__dirname, "../../assets/pbir-templates");
+
+const TEMPLATE_FILES = {
+  card: "card.visual.json",
+  multiRowCard: "multiRowCard.visual.json",
+  tableEx: "tableEx.visual.json",
+  columnChart: "columnChart.visual.json",
+  clusteredBarChart: "clusteredBarChart.visual.json",
+  pieChart: "pieChart.visual.json",
+  slicer: "slicer.visual.json"
+};
+
+let cache = null;
+
+function loadBaseTemplates() {
+  if (cache) {
+    return cache;
+  }
+
+  cache = {};
+  for (const [key, fileName] of Object.entries(TEMPLATE_FILES)) {
+    const filePath = path.join(TEMPLATE_ROOT, fileName);
+    cache[key] = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  }
+
+  return cache;
+}
+
+function createTextboxTemplate() {
+  return {
+    $schema:
+      "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+    name: "textbox_template",
+    position: {
+      x: 0,
+      y: 0,
+      z: 0,
+      width: 320,
+      height: 120,
+      tabOrder: 0
+    },
+    visual: {
+      visualType: "textbox",
+      objects: {
+        general: [
+          {
+            properties: {
+              paragraphs: {
+                expr: {
+                  Literal: {
+                    Value: "'New text box'"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      drillFilterOtherVisuals: true
+    }
+  };
+}
+
+export function getVisualTemplate(visualType) {
+  const templates = loadBaseTemplates();
+  switch (visualType) {
+    case "card":
+      return deepClone(templates.card);
+    case "multiRowCard":
+      return deepClone(templates.multiRowCard);
+    case "table":
+      return deepClone(templates.tableEx);
+    case "matrix": {
+      const template = deepClone(templates.tableEx);
+      template.visual.visualType = "pivotTable";
+      return template;
+    }
+    case "clusteredBarChart":
+      return deepClone(templates.clusteredBarChart);
+    case "clusteredColumnChart": {
+      const template = deepClone(templates.columnChart);
+      template.visual.visualType = "clusteredColumnChart";
+      return template;
+    }
+    case "lineChart": {
+      const template = deepClone(templates.columnChart);
+      template.visual.visualType = "lineChart";
+      return template;
+    }
+    case "pieChart":
+      return deepClone(templates.pieChart);
+    case "slicer":
+      return deepClone(templates.slicer);
+    case "textbox":
+      return createTextboxTemplate();
+    default:
+      throw new Error(`Unsupported visual type: ${visualType}`);
+  }
+}

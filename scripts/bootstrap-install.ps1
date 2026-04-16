@@ -29,7 +29,7 @@ try {
     catch {
         Write-Step "Direct download failed. Trying GitHub CLI archive fallback."
         if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-            throw "Could not download archive and GitHub CLI is not available."
+            throw "Failed to download $zipUrl and GitHub CLI is not available."
         }
 
         $token = (& gh auth token).Trim()
@@ -45,12 +45,17 @@ try {
         Invoke-WebRequest -Uri "https://api.github.com/repos/$RepoOwner/$RepoName/zipball/$Ref" -Headers $headers -OutFile $zipPath -UseBasicParsing
 
         if (-not (Test-Path -LiteralPath $zipPath)) {
-            throw "GitHub CLI archive fallback failed."
+            throw "GitHub CLI archive fallback failed to create $zipPath."
         }
     }
 
     Write-Step "Extracting package"
-    Expand-Archive -Path $zipPath -DestinationPath $tempRoot -Force
+    try {
+        Expand-Archive -Path $zipPath -DestinationPath $tempRoot -Force
+    }
+    catch {
+        throw "Failed to extract bootstrap package: $($_.Exception.Message)"
+    }
 
     $installScript = Get-ChildItem -Path $tempRoot -Recurse -File -Filter "install-local.ps1" |
         Where-Object { $_.FullName -like "*\scripts\install-local.ps1" } |
@@ -60,7 +65,7 @@ try {
         throw "install-local.ps1 not found in extracted repo."
     }
 
-    Write-Step "Running local installer"
+    Write-Step "Running clean local installer"
     $installArgs = @{
         PluginParent = $PluginParent
         MarketplacePath = $MarketplacePath
@@ -69,9 +74,17 @@ try {
         $installArgs.Force = $true
     }
 
-    & $installScript @installArgs
+    try {
+        & $installScript @installArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "install-local.ps1 exited with code $LASTEXITCODE"
+        }
+    }
+    catch {
+        throw "Clean install failed: $($_.Exception.Message)"
+    }
 
-    Write-Step "Done. Restart Codex desktop to load the plugin."
+    Write-Step "Done. Restart Codex desktop to load the plugin into session context."
 }
 finally {
     if (-not $KeepTemp -and (Test-Path -LiteralPath $tempRoot)) {

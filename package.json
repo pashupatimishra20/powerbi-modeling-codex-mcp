@@ -1,0 +1,15 @@
+{
+  "name": "powerbi-modeling-codex-mcp",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Codex plugin wrapper for Power BI semantic model and PBIR report authoring MCP workflows.",
+  "scripts": {
+    "server:report-authoring": "node ./server/powerbi-report-authoring-server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.17.1"
+  }
+}

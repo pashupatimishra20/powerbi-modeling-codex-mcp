@@ -156,7 +156,7 @@ class McpClient {
       capabilities: {},
       clientInfo: {
         name: 'codex-powerbi-modeling-plugin',
-        version: '0.1.0'
+        version: '0.3.0'
       }
     });
 
@@ -196,10 +196,10 @@ function extractPayload(result) {
 
 function printUsage() {
   console.log(`Usage:
-  node pbi_mcp_client.js list-tools
-  node pbi_mcp_client.js help <tool>
-  node pbi_mcp_client.js call <tool> '<json-arguments>'
-  node pbi_mcp_client.js catalog [--out <path>]
+  node pbi_mcp_client.cjs list-tools
+  node pbi_mcp_client.cjs help <tool>
+  node pbi_mcp_client.cjs call <tool> '<json-arguments>'
+  node pbi_mcp_client.cjs catalog [--out <path>]
 
 Environment overrides:
   PBI_MCP_COMMAND   command executable

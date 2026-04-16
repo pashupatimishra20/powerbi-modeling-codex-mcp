@@ -1,0 +1,6 @@
+table Sales
+  column Category
+  column Amount
+  column DateKey
+  measure Total Sales = SUM(Sales[Amount])
+  measure Net Sales = SUM(Sales[Amount]) - 10

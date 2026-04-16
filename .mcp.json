@@ -15,6 +15,19 @@
         "PROGRAMFILES": "C:\\Program Files"
       },
       "startupTimeoutMs": 120000
+    },
+    "powerbi-report-authoring-mcp": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": [
+        "/c",
+        ".\\scripts\\start-report-authoring-mcp.cmd"
+      ],
+      "env": {
+        "SystemRoot": "C:\\Windows",
+        "PROGRAMFILES": "C:\\Program Files"
+      },
+      "startupTimeoutMs": 120000
     }
   }
 }

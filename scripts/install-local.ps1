@@ -7,80 +7,59 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+. (Join-Path $scriptDir 'plugin-install-common.ps1')
+
 $repoRoot = Resolve-Path (Join-Path $scriptDir '..')
 $sourcePluginPath = $repoRoot.Path
-$pluginManifestPath = Join-Path $sourcePluginPath '.codex-plugin\plugin.json'
-
-if (-not (Test-Path -LiteralPath $pluginManifestPath)) {
-    throw "Plugin manifest not found at $pluginManifestPath"
-}
-
-$pluginManifest = Get-Content $pluginManifestPath -Raw | ConvertFrom-Json
-$pluginName = $pluginManifest.name
-if (-not $pluginName) {
-    throw 'Plugin name missing in plugin.json'
-}
-
+$pluginInfo = Get-PluginManifestInfo -PluginRoot $sourcePluginPath
+$pluginName = $pluginInfo.PluginName
+$marketplaceSourcePath = $pluginInfo.MarketplaceSourcePath
 $destinationPluginPath = Join-Path $PluginParent $pluginName
+$installInPlace = Test-SameResolvedPath -PathA $sourcePluginPath -PathB $destinationPluginPath
 
-if (Test-Path -LiteralPath $destinationPluginPath) {
-    if (-not $Force) {
-        throw "Destination exists: $destinationPluginPath. Re-run with -Force to overwrite."
-    }
-
-    Remove-Item -LiteralPath $destinationPluginPath -Recurse -Force
+if ($Force) {
+    Write-Host "Compatibility note: -Force is accepted but no longer required. This installer now performs a clean reinstall by default."
 }
 
-New-Item -ItemType Directory -Path $PluginParent -Force | Out-Null
-New-Item -ItemType Directory -Path $destinationPluginPath -Force | Out-Null
-Copy-Item -Path (Join-Path $sourcePluginPath '*') -Destination $destinationPluginPath -Recurse -Force
-
-$marketplaceDir = Split-Path -Parent $MarketplacePath
-New-Item -ItemType Directory -Path $marketplaceDir -Force | Out-Null
-
-if (Test-Path -LiteralPath $MarketplacePath) {
-    $marketplace = Get-Content $MarketplacePath -Raw | ConvertFrom-Json
+if ($installInPlace) {
+    Write-Host "Source path already matches install target. Skipping folder replacement and refreshing the install in place."
 } else {
-    $marketplace = [ordered]@{
-        name = 'local-kb461vt-marketplace'
-        interface = @{ displayName = 'KB461VT Local Plugins' }
-        plugins = @()
+    Remove-PluginInstall `
+        -DestinationPluginPath $destinationPluginPath `
+        -MarketplacePath $MarketplacePath `
+        -PluginName $pluginName `
+        -MarketplaceSourcePath $marketplaceSourcePath
+
+    New-Item -ItemType Directory -Path $PluginParent -Force | Out-Null
+    New-Item -ItemType Directory -Path $destinationPluginPath -Force | Out-Null
+    Copy-Item -Path (Join-Path $sourcePluginPath '*') -Destination $destinationPluginPath -Recurse -Force
+}
+
+$workingPluginPath = if ($installInPlace) { $sourcePluginPath } else { $destinationPluginPath }
+$packageJsonPath = Join-Path $workingPluginPath 'package.json'
+if (Test-Path -LiteralPath $packageJsonPath) {
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        throw "npm is required to install the local PBIR report authoring server dependencies."
+    }
+
+    Write-Host "Installing Node dependencies in: $workingPluginPath"
+    Push-Location $workingPluginPath
+    try {
+        & npm install --omit=dev
+        if ($LASTEXITCODE -ne 0) {
+            throw "npm install failed with exit code $LASTEXITCODE"
+        }
+    }
+    finally {
+        Pop-Location
     }
 }
 
-if (-not $marketplace.plugins) {
-    $marketplace | Add-Member -NotePropertyName plugins -NotePropertyValue @()
-}
+$marketplace = Read-Marketplace -MarketplacePath $MarketplacePath
+$marketplace = Set-PluginMarketplaceEntry -Marketplace $marketplace -PluginName $pluginName -MarketplaceSourcePath $marketplaceSourcePath
+Write-Marketplace -MarketplacePath $MarketplacePath -Marketplace $marketplace
 
-$entry = [ordered]@{
-    name = $pluginName
-    source = [ordered]@{
-        source = 'local'
-        path = "./plugins/$pluginName"
-    }
-    policy = [ordered]@{
-        installation = 'AVAILABLE'
-        authentication = 'ON_INSTALL'
-    }
-    category = 'Productivity'
-}
-
-$existingIndex = -1
-for ($i = 0; $i -lt $marketplace.plugins.Count; $i++) {
-    if ($marketplace.plugins[$i].name -eq $pluginName) {
-        $existingIndex = $i
-        break
-    }
-}
-
-if ($existingIndex -ge 0) {
-    $marketplace.plugins[$existingIndex] = $entry
-} else {
-    $marketplace.plugins += $entry
-}
-
-$marketplace | ConvertTo-Json -Depth 10 | Set-Content -Path $MarketplacePath -Encoding UTF8
-
-Write-Host "Installed plugin to: $destinationPluginPath"
+Write-Host "Installed plugin path: $workingPluginPath"
 Write-Host "Updated marketplace: $MarketplacePath"
-Write-Host 'Restart Codex desktop to load the plugin.'
+Write-Host "Marketplace source path: $marketplaceSourcePath"
+Write-Host 'Restart Codex desktop to load the plugin into session context.'

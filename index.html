@@ -140,34 +140,26 @@
       box-shadow: 0 8px 18px rgba(15, 143, 126, 0.2);
     }
 
-    .pill-share {
-      border-color: rgba(199, 137, 36, 0.35);
-      color: #7a5313;
-      background: rgba(255, 247, 231, 0.88);
-    }
-
-    .pill-share:hover {
-      box-shadow: 0 8px 18px rgba(199, 137, 36, 0.2);
-    }
-
     .linkedin-strip {
-      margin-top: 14px;
+      position: fixed;
+      right: 18px;
+      top: 18px;
       border: 1px solid rgba(15, 143, 126, 0.24);
-      border-radius: 14px;
-      background: linear-gradient(90deg, rgba(232, 249, 246, 0.92), rgba(255, 255, 255, 0.9));
-      padding: 12px;
+      border-radius: 16px;
+      background: linear-gradient(90deg, rgba(232, 249, 246, 0.96), rgba(255, 255, 255, 0.95));
+      padding: 12px 14px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px 14px;
-      align-items: center;
-      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      box-shadow: 0 14px 26px rgba(19, 47, 43, 0.2);
+      z-index: 3;
+      max-width: min(360px, calc(100vw - 24px));
     }
 
     .linkedin-badge {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
-      min-width: 250px;
     }
 
     .linkedin-logo {
@@ -187,30 +179,33 @@
 
     .linkedin-meta {
       display: grid;
-      gap: 1px;
+      gap: 2px;
     }
 
     .linkedin-name {
       margin: 0;
       color: var(--ink);
       font-family: "Space Grotesk", sans-serif;
-      font-size: 0.95rem;
-      line-height: 1.2;
+      font-size: 1rem;
+      line-height: 1.15;
     }
 
-    .linkedin-handle {
+    .linkedin-headline {
       margin: 0;
+      color: #355853;
       font-family: "IBM Plex Mono", monospace;
-      font-size: 0.75rem;
-      color: #0a66c2;
-      text-decoration: none;
+      font-size: 0.72rem;
+      line-height: 1.3;
     }
 
     .linkedin-actions {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
+      gap: 0;
+    }
+
+    .linkedin-actions .pill {
+      padding: 10px 14px;
+      font-size: 0.8rem;
     }
 
     .hero-art {
@@ -340,6 +335,17 @@
       .layout {
         grid-template-columns: 1fr;
       }
+
+      .linkedin-strip {
+        right: 10px;
+        top: 10px;
+        padding: 10px 12px;
+        gap: 10px;
+      }
+
+      .linkedin-headline {
+        max-width: 180px;
+      }
     }
   </style>
 </head>
@@ -364,17 +370,16 @@
             <a class="pill" href="#usage">Usage commands</a>
             <a class="pill" href="#support">Troubleshooting</a>
           </div>
-          <div class="linkedin-strip" aria-label="LinkedIn actions">
+          <div class="linkedin-strip" aria-label="LinkedIn connect">
             <div class="linkedin-badge">
               <div class="linkedin-logo" aria-hidden="true">in</div>
               <div class="linkedin-meta">
                 <p class="linkedin-name">Pashupati Mishra</p>
-                <a class="linkedin-handle" href="https://www.linkedin.com/in/pashupati-mishra/" target="_blank" rel="noopener noreferrer">linkedin.com/in/pashupati-mishra</a>
+                <p class="linkedin-headline">Automation Architect @ EY</p>
               </div>
             </div>
             <div class="linkedin-actions">
               <a class="pill" href="https://www.linkedin.com/in/pashupati-mishra/" target="_blank" rel="noopener noreferrer">Connect</a>
-              <a class="pill pill-share" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.linkedin.com%2Fin%2Fpashupati-mishra%2F" target="_blank" rel="noopener noreferrer">Share as post</a>
             </div>
           </div>
         </div>
@@ -417,49 +422,73 @@
           <li>List/edit tables, columns, measures, and relationships.</li>
           <li>Run DAX validation/execution and model refresh operations.</li>
           <li>Export/import model artifacts via TMDL or BIM operations.</li>
+          <li>Open PBIR/PBIP projects and create pages, visuals, and field bindings from Codex.</li>
+          <li>Install the whole integration as a Codex plugin with one GitHub command.</li>
+        </ul>
+      </article>
+
+      <article class="card wide reveal">
+        <h2>What This Adds Over Microsoft's MCP</h2>
+        <p>
+          Microsoft's official <code>powerbi-modeling-mcp</code> gives you the semantic-model tool surface.
+          This repo packages that upstream capability for <strong>Codex</strong> and adds the missing workflow pieces
+          needed to actually use it comfortably inside Codex sessions.
+        </p>
+        <ul>
+          <li>Codex plugin manifest and MCP wiring so the server can be installed and discovered as a Codex plugin.</li>
+          <li>Codex skill instructions that map natural-language requests to the right semantic-model and report-authoring operations.</li>
+          <li>A local <code>powerbi-report-authoring-mcp</code> server for PBIR/PBIP pages, visuals, bindings, and basic formatting.</li>
+          <li>Clean install, uninstall, and reinstall scripts for <code>~/plugins</code> and <code>~/.agents/plugins/marketplace.json</code>.</li>
+          <li>A fallback Node client for listing tools, calling <code>HELP</code>, and troubleshooting outside the Codex UI.</li>
+          <li>GitHub Pages documentation and copy-ready commands for end users.</li>
         </ul>
       </article>
 
       <article class="card wide reveal" id="install">
         <h2>Install in One Command</h2>
-        <p>For a public GitHub repo, users can bootstrap directly from PowerShell:</p>
+        <p>For a public GitHub repo, users can bootstrap directly from PowerShell. The installer does a clean reinstall by default, removing any earlier local install of this plugin and deduplicating its marketplace entries before reinstalling:</p>
         <div class="code">powershell -NoProfile -ExecutionPolicy Bypass -Command "iex (irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1')"</div>
-        <h3>Forced upgrade (overwrite existing local plugin)</h3>
+        <h3>Compatibility flag</h3>
         <div class="code">powershell -NoProfile -ExecutionPolicy Bypass -Command "&amp; ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Force"</div>
-        <p>Then restart Codex desktop.</p>
+        <p>`-Force` is still accepted for older docs, but it is no longer required. Installed paths: `~/plugins/powerbi-modeling-codex` and `~/.agents/plugins/marketplace.json`. Then restart Codex desktop.</p>
+        <div class="code">powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-local.ps1</div>
       </article>
 
       <article class="card reveal" id="usage">
         <h2>Usage in Codex</h2>
         <ul class="steps">
-          <li>Open your PBIX in Power BI Desktop.</li>
-          <li>In Codex, call the skill and connect to the file.</li>
-          <li>Run schema or modeling operations in natural language.</li>
-          <li>Validate outputs with list/get operations after changes.</li>
+          <li>Open your PBIX in Power BI Desktop for live semantic-model work, or save it as PBIP/PBIR for report authoring.</li>
+          <li>In Codex, call the skill and connect to the model or open the PBIR project.</li>
+          <li>Run schema/modeling operations or create report pages and visuals in natural language.</li>
+          <li>Validate outputs with list/get operations and <code>ValidateProject</code> after file-based report changes.</li>
         </ul>
         <div class="code">USE powerbi-modeling-mcp Connect to 'CVs.pbix' in Power BI Desktop
 USE powerbi-modeling-mcp list tables
-USE powerbi-modeling-mcp create a measure to count inactive candidates</div>
+USE powerbi-modeling-mcp create a measure to count inactive candidates
+USE powerbi-modeling-mcp open my PBIR project and create a clustered column chart on a new page</div>
       </article>
 
       <article class="card reveal" id="support">
         <h2>Troubleshooting</h2>
         <ul>
-          <li>If MCP handshake fails in-client, use fallback client in this repo.</li>
+          <li>If MCP handshake fails in-client, use the fallback client in this repo.</li>
           <li>Confirm local instance discovery (`ListLocalInstances`).</li>
           <li>Run `Connect` with the returned localhost connection string.</li>
+          <li>Restart Power BI Desktop after external PBIR file edits so the report picks up the changes.</li>
+          <li>Restart Codex after installing or reinstalling the plugin so it appears in session context.</li>
           <li>Use official Microsoft troubleshooting guidance for package/runtime issues.</li>
         </ul>
-        <div class="code">node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.js list-tools
-node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.js help connection_operations</div>
+        <div class="code">node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.cjs list-tools
+node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.cjs help connection_operations</div>
       </article>
 
       <article class="card wide reveal">
         <h2>Scope & Boundaries</h2>
         <p>
-          This integration targets <strong>semantic model operations</strong>. Report-canvas visual authoring
-          (placing charts and formatting visuals directly on the PBIX canvas UI) is not currently
-          exposed by the modeling MCP toolset.
+          This integration now covers both <strong>semantic model operations</strong> and <strong>PBIR/PBIP report authoring</strong>.
+          Direct binary <code>.pbix</code> editing is still out of scope, so convert PBIX files to PBIP/PBIR when you want
+          Codex to create or update report pages and visuals on disk.
         </p>
       </article>
 

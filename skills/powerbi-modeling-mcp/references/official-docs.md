@@ -22,4 +22,4 @@ Use these official sources before making workflow assumptions.
 
 - The current package exposes operation names like `Connect` and `ListLocalInstances` under `connection_operations`.
 - Natural-language prompts such as "Connect to '[File Name]' in Power BI Desktop" are client-side orchestration patterns; the raw MCP tool call still maps to `connection_operations` with `operation: Connect` and a connection string.
-- Keep an operation map synced from live MCP `HELP` output using `scripts/pbi_mcp_client.js catalog`.
+- Keep an operation map synced from live MCP `HELP` output using `scripts/pbi_mcp_client.cjs catalog`.
