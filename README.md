@@ -1,6 +1,6 @@
 # Power BI Modeling MCP for Codex
 
-A Codex plugin that integrates the official Microsoft Power BI Modeling MCP server and adds a local PBIR report-authoring MCP for page and visual creation workflows.
+A Codex plugin and standalone Codex skill bundle that integrate the official Microsoft Power BI Modeling MCP server and add a local PBIR report-authoring MCP for page and visual creation workflows.
 
 ## Upstream Acknowledgment
 
@@ -51,7 +51,7 @@ After making the repo public and enabling Pages (`main` branch / root), the site
 powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1
 ```
 
-This performs a clean reinstall for this plugin by removing any previous local install at `~/plugins/powerbi-modeling-codex`, removing duplicate marketplace entries for `./plugins/powerbi-modeling-codex`, installing the Node dependencies used by the local PBIR report-authoring server, and updating `~/.agents/plugins/marketplace.json`.
+This performs a clean reinstall for this integration by removing any previous local install at `~/plugins/powerbi-modeling-codex`, removing any previous standalone skill at `~/.codex/skills/powerbi-modeling-mcp`, removing duplicate marketplace entries for `./plugins/powerbi-modeling-codex`, installing the Node dependencies used by the local PBIR report-authoring server, and updating `~/.agents/plugins/marketplace.json`.
 
 3. Restart Codex desktop.
 
@@ -59,6 +59,7 @@ Installed paths:
 
 - Plugin files: `~/plugins/powerbi-modeling-codex`
 - Marketplace entry file: `~/.agents/plugins/marketplace.json`
+- Standalone skill files: `~/.codex/skills/powerbi-modeling-mcp`
 
 ## Uninstall (local)
 
@@ -66,7 +67,7 @@ Installed paths:
 powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-local.ps1
 ```
 
-This removes the installed plugin folder if present and removes all marketplace entries that target `powerbi-modeling-codex`.
+This removes the installed plugin folder, the installed standalone skill folder, and all marketplace entries that target `powerbi-modeling-codex`.
 
 ## Install (public one-command bootstrap)
 
@@ -84,7 +85,7 @@ Running the same bootstrap command again performs the same clean reinstall. `-Fo
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Force"
 ```
 
-After install, restart Codex desktop.
+After install, restart Codex desktop so both the plugin and standalone skill are loaded into session context.
 
 ## Usage examples in Codex
 
@@ -113,6 +114,7 @@ Then rebuild the summary index if needed.
 ## Notes
 
 - This plugin focuses on semantic model operations (tables, columns, measures, relationships, DAX query, etc.).
+- The public installer now provisions both the plugin and a standalone skill so discovery works through either Codex plugin loading or `$CODEX_HOME/skills`.
 - PBIR/PBIP report authoring is now supported through the local `powerbi-report-authoring-mcp` server.
 - PBIX binary editing is still out of scope. Convert PBIX to PBIP/PBIR in Power BI Desktop first using `File > Save As`.
 - External PBIR changes require reopening or restarting Power BI Desktop before they appear in the authoring canvas.

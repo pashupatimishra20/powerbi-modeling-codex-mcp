@@ -14,6 +14,14 @@ Use this skill for a two-server workflow:
 
 This skill also includes a Node-based fallback client and a generated operation catalog for the official modeling MCP operations.
 
+Install topology:
+
+- Standalone skill bundle: `$CODEX_HOME/skills/powerbi-modeling-mcp` or `~/.codex/skills/powerbi-modeling-mcp`
+- Plugin + MCP wiring: `~/plugins/powerbi-modeling-codex`
+
+The standalone skill is for discovery, routing, references, and the fallback semantic-model client.
+The MCP server wiring remains owned by the installed plugin.
+
 ## Quick Start
 
 1. Check official references:
@@ -86,6 +94,7 @@ node scripts/pbi_mcp_client.cjs help measure_operations
 ## Troubleshooting
 
 - If native client MCP handshake fails, use `scripts/pbi_mcp_client.cjs` as transport fallback.
+- If the skill is installed standalone under `~/.codex/skills`, do not expect `server/` files inside the skill folder. The local PBIR report-authoring MCP server is provided by the installed plugin under `~/plugins/powerbi-modeling-codex`.
 - If startup fails on first run, pre-warm package:
 
 ```bash
@@ -104,7 +113,7 @@ node scripts/pbi_mcp_client.cjs call connection_operations "{\"request\":{\"oper
 ## Resources
 
 - `scripts/pbi_mcp_client.cjs`: Local JSON-RPC client for the Power BI Modeling MCP server.
-- `server/powerbi-report-authoring-server.js`: Local MCP server for PBIR project/page/visual operations.
+- `~/plugins/powerbi-modeling-codex/server/powerbi-report-authoring-server.js`: Local MCP server for PBIR project/page/visual operations installed with the plugin.
 - `references/official-docs.md`: Microsoft/GitHub/NPM official doc links and usage notes.
 - `references/operations-catalog.json`: Full generated `HELP` payloads for all tools.
 - `references/operations-index.md`: Human-readable tool/operation matrix.

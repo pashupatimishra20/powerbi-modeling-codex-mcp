@@ -1,8 +1,8 @@
 function New-DefaultMarketplace {
     return [pscustomobject][ordered]@{
-        name = 'local-kb461vt-marketplace'
+        name = 'local-codex-marketplace'
         interface = [pscustomobject][ordered]@{
-            displayName = 'KB461VT Local Plugins'
+            displayName = 'Local Plugins'
         }
         plugins = @()
     }
@@ -47,8 +47,18 @@ function Read-Marketplace {
         $marketplace | Add-Member -NotePropertyName plugins -NotePropertyValue @()
     }
 
+    if ($marketplace.PSObject.Properties.Name -contains 'name' -and [string]$marketplace.name -eq 'local-kb461vt-marketplace') {
+        $marketplace.name = 'local-codex-marketplace'
+    }
+
     if (-not ($marketplace.PSObject.Properties.Name -contains 'interface')) {
-        $marketplace | Add-Member -NotePropertyName interface -NotePropertyValue ([ordered]@{ displayName = 'KB461VT Local Plugins' })
+        $marketplace | Add-Member -NotePropertyName interface -NotePropertyValue ([ordered]@{ displayName = 'Local Plugins' })
+    } elseif (
+        $marketplace.interface -and
+        $marketplace.interface.PSObject.Properties.Name -contains 'displayName' -and
+        [string]$marketplace.interface.displayName -eq 'KB461VT Local Plugins'
+    ) {
+        $marketplace.interface.displayName = 'Local Plugins'
     }
 
     return $marketplace
@@ -159,6 +169,39 @@ function Remove-PluginInstall {
     $marketplace = Remove-PluginMarketplaceEntries -Marketplace $marketplace -PluginName $PluginName -MarketplaceSourcePath $MarketplaceSourcePath
     if ($marketplaceExisted -or @($marketplace.plugins).Count -gt 0) {
         Write-Marketplace -MarketplacePath $MarketplacePath -Marketplace $marketplace
+    }
+}
+
+function Remove-InstalledPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path
+    )
+
+    if (Test-Path -LiteralPath $Path) {
+        Remove-Item -LiteralPath $Path -Recurse -Force
+    }
+}
+
+function Copy-DirectoryChildren {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourcePath,
+        [Parameter(Mandatory = $true)]
+        [string]$DestinationPath,
+        [string[]]$ExcludeNames = @()
+    )
+
+    if (-not (Test-Path -LiteralPath $SourcePath)) {
+        throw "Source path does not exist: $SourcePath"
+    }
+
+    New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+
+    Get-ChildItem -LiteralPath $SourcePath -Force | Where-Object {
+        $ExcludeNames -notcontains $_.Name
+    } | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $DestinationPath $_.Name) -Recurse -Force
     }
 }
 

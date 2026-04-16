@@ -438,7 +438,7 @@
           <li>Codex plugin manifest and MCP wiring so the server can be installed and discovered as a Codex plugin.</li>
           <li>Codex skill instructions that map natural-language requests to the right semantic-model and report-authoring operations.</li>
           <li>A local <code>powerbi-report-authoring-mcp</code> server for PBIR/PBIP pages, visuals, bindings, and basic formatting.</li>
-          <li>Clean install, uninstall, and reinstall scripts for <code>~/plugins</code> and <code>~/.agents/plugins/marketplace.json</code>.</li>
+          <li>Clean install, uninstall, and reinstall scripts for <code>~/plugins</code>, <code>~/.agents/plugins/marketplace.json</code>, and <code>~/.codex/skills</code>.</li>
           <li>A fallback Node client for listing tools, calling <code>HELP</code>, and troubleshooting outside the Codex UI.</li>
           <li>GitHub Pages documentation and copy-ready commands for end users.</li>
         </ul>
@@ -446,11 +446,11 @@
 
       <article class="card wide reveal" id="install">
         <h2>Install in One Command</h2>
-        <p>For a public GitHub repo, users can bootstrap directly from PowerShell. The installer does a clean reinstall by default, removing any earlier local install of this plugin and deduplicating its marketplace entries before reinstalling:</p>
+        <p>For a public GitHub repo, users can bootstrap directly from PowerShell. The installer does a clean reinstall by default, removing any earlier local plugin install, removing any earlier standalone skill install, and deduplicating its marketplace entries before reinstalling:</p>
         <div class="code">powershell -NoProfile -ExecutionPolicy Bypass -Command "iex (irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1')"</div>
         <h3>Compatibility flag</h3>
         <div class="code">powershell -NoProfile -ExecutionPolicy Bypass -Command "&amp; ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Force"</div>
-        <p>`-Force` is still accepted for older docs, but it is no longer required. Installed paths: `~/plugins/powerbi-modeling-codex` and `~/.agents/plugins/marketplace.json`. Then restart Codex desktop.</p>
+        <p>`-Force` is still accepted for older docs, but it is no longer required. Installed paths: `~/plugins/powerbi-modeling-codex`, `~/.agents/plugins/marketplace.json`, and `~/.codex/skills/powerbi-modeling-mcp`. Then restart Codex desktop.</p>
         <div class="code">powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\uninstall-local.ps1</div>
       </article>
@@ -476,7 +476,7 @@ USE powerbi-modeling-mcp open my PBIR project and create a clustered column char
           <li>Confirm local instance discovery (`ListLocalInstances`).</li>
           <li>Run `Connect` with the returned localhost connection string.</li>
           <li>Restart Power BI Desktop after external PBIR file edits so the report picks up the changes.</li>
-          <li>Restart Codex after installing or reinstalling the plugin so it appears in session context.</li>
+          <li>Restart Codex after installing or reinstalling so both the plugin and standalone skill appear in session context.</li>
           <li>Use official Microsoft troubleshooting guidance for package/runtime issues.</li>
         </ul>
         <div class="code">node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.cjs list-tools

@@ -1,5 +1,5 @@
 export const REPORT_PROJECT_SERVER_NAME = "powerbi-report-authoring-mcp";
-export const REPORT_PROJECT_SERVER_VERSION = "0.3.0";
+export const REPORT_PROJECT_SERVER_VERSION = "0.4.0";
 
 export const SCHEMA_URLS = {
   definitionProperties:

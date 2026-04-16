@@ -4,6 +4,7 @@ param(
     [string]$Ref = "main",
     [string]$PluginParent = "$HOME\plugins",
     [string]$MarketplacePath = "$HOME\.agents\plugins\marketplace.json",
+    [string]$SkillParent = $(if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME 'skills' } else { Join-Path (Join-Path $HOME '.codex') 'skills' }),
     [switch]$Force,
     [switch]$KeepTemp
 )
@@ -69,6 +70,7 @@ try {
     $installArgs = @{
         PluginParent = $PluginParent
         MarketplacePath = $MarketplacePath
+        SkillParent = $SkillParent
     }
     if ($Force) {
         $installArgs.Force = $true
@@ -84,7 +86,7 @@ try {
         throw "Clean install failed: $($_.Exception.Message)"
     }
 
-    Write-Step "Done. Restart Codex desktop to load the plugin into session context."
+    Write-Step "Done. Restart Codex desktop to load the plugin and standalone skill into session context."
 }
 finally {
     if (-not $KeepTemp -and (Test-Path -LiteralPath $tempRoot)) {
