@@ -3,6 +3,7 @@
   "pageOrder": [
     "ReportSection",
     "Details",
+    "CrossReportDetails",
     "TooltipPage"
   ],
   "activePageName": "ReportSection"

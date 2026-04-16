@@ -1,5 +1,20 @@
 import { SCHEMA_URLS } from "./constants.js";
 import {
+  addToGroup,
+  align,
+  createGroup,
+  deleteGroup,
+  distribute,
+  getGroup,
+  listGroups,
+  removeFromGroup,
+  resizeToFit,
+  setLayerOrder,
+  setVisibility,
+  ungroup,
+  updateGroup
+} from "./composition-service.js";
+import {
   createBookmark,
   createBookmarkGroup,
   deleteBookmark,
@@ -20,8 +35,10 @@ import {
 } from "./field-parameter-service.js";
 import {
   clearDrillthroughPage,
+  clearCrossReportDrillthroughPage,
   clearTooltipPage,
   configureTooltipPage,
+  configureCrossReportDrillthroughPage,
   configureDrillthroughPage,
   assignTooltip,
   createControl,
@@ -195,11 +212,23 @@ export async function handleInteractionOperation(request) {
         operation: "ConfigureDrillthroughPage",
         result: await configureDrillthroughPage(project, request)
       };
+    case "ConfigureCrossReportDrillthroughPage":
+      return {
+        success: true,
+        operation: "ConfigureCrossReportDrillthroughPage",
+        result: await configureCrossReportDrillthroughPage(project, request)
+      };
     case "ClearDrillthroughPage":
       return {
         success: true,
         operation: "ClearDrillthroughPage",
         page: await clearDrillthroughPage(project, request)
+      };
+    case "ClearCrossReportDrillthroughPage":
+      return {
+        success: true,
+        operation: "ClearCrossReportDrillthroughPage",
+        page: await clearCrossReportDrillthroughPage(project, request)
       };
     case "ConfigureTooltipPage":
       return {
@@ -261,6 +290,24 @@ export async function handleInteractionOperation(request) {
               : "applyAllSlicersButton"
         })
       };
+    case "CreateWebUrlButton":
+      return {
+        success: true,
+        operation: "CreateWebUrlButton",
+        control: await createControl(project, {
+          ...request,
+          controlType: "webUrlButton"
+        })
+      };
+    case "CreateQnaButton":
+      return {
+        success: true,
+        operation: "CreateQnaButton",
+        control: await createControl(project, {
+          ...request,
+          controlType: "qnaButton"
+        })
+      };
     case "CreateControl":
       return {
         success: true,
@@ -275,6 +322,40 @@ export async function handleInteractionOperation(request) {
       };
     default:
       throw new Error(`Unsupported interaction operation: ${request.operation}`);
+  }
+}
+
+export async function handleCompositionOperation(request) {
+  const project = getProjectFromRequest(request);
+  switch (request.operation) {
+    case "ListGroups":
+      return { success: true, operation: "ListGroups", groups: listGroups(project, request) };
+    case "GetGroup":
+      return { success: true, operation: "GetGroup", group: getGroup(project, request) };
+    case "CreateGroup":
+      return { success: true, operation: "CreateGroup", group: await createGroup(project, request) };
+    case "UpdateGroup":
+      return { success: true, operation: "UpdateGroup", group: await updateGroup(project, request) };
+    case "DeleteGroup":
+      return { success: true, operation: "DeleteGroup", ...await deleteGroup(project, request) };
+    case "AddToGroup":
+      return { success: true, operation: "AddToGroup", group: await addToGroup(project, request) };
+    case "RemoveFromGroup":
+      return { success: true, operation: "RemoveFromGroup", group: await removeFromGroup(project, request) };
+    case "Ungroup":
+      return { success: true, operation: "Ungroup", ...await ungroup(project, request) };
+    case "SetVisibility":
+      return { success: true, operation: "SetVisibility", result: await setVisibility(project, request) };
+    case "SetLayerOrder":
+      return { success: true, operation: "SetLayerOrder", result: await setLayerOrder(project, request) };
+    case "Align":
+      return { success: true, operation: "Align", result: await align(project, request) };
+    case "Distribute":
+      return { success: true, operation: "Distribute", result: await distribute(project, request) };
+    case "ResizeToFit":
+      return { success: true, operation: "ResizeToFit", group: await resizeToFit(project, request) };
+    default:
+      throw new Error(`Unsupported composition operation: ${request.operation}`);
   }
 }
 

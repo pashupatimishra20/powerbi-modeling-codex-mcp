@@ -1,23 +1,23 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "BookmarkUrban",
+  "name": "AskSalesQuestion",
   "parentGroupName": "ActionsGroup",
   "position": {
-    "x": 320,
-    "y": 0,
-    "z": 1,
+    "x": 520,
+    "y": 52,
+    "z": 3,
     "width": 180,
     "height": 44,
-    "tabOrder": 1
+    "tabOrder": 3
   },
   "annotations": [
     {
       "name": "codex.controlType",
-      "value": "bookmarkButton"
+      "value": "qnaButton"
     },
     {
-      "name": "codex.bookmarkName",
-      "value": "UrbanView"
+      "name": "codex.qnaQuestion",
+      "value": "Show top categories by sales"
     }
   ],
   "visual": {
@@ -36,7 +36,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Urban'"
+                  "Value": "'Ask sales'"
                 }
               }
             }
@@ -56,14 +56,14 @@
             "type": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bookmark'"
+                  "Value": "'Qna'"
                 }
               }
             },
-            "bookmark": {
+            "qna": {
               "expr": {
                 "Literal": {
-                  "Value": "'UrbanView'"
+                  "Value": "'Show top categories by sales'"
                 }
               }
             }

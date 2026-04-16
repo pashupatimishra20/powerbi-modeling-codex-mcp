@@ -16,6 +16,8 @@ const TEMPLATE_FILES = {
   pageNavigator: "pageNavigator.visual.json",
   applyAllSlicersButton: "applyAllSlicersButton.visual.json",
   clearAllSlicersButton: "clearAllSlicersButton.visual.json",
+  webUrlButton: "webUrlButton.visual.json",
+  qnaButton: "qnaButton.visual.json",
   card: "card.visual.json",
   multiRowCard: "multiRowCard.visual.json",
   tableEx: "tableEx.visual.json",

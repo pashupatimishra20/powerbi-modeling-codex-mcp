@@ -60,6 +60,8 @@ function setVisualLink(definition, linkConfig = {}) {
     "bookmark",
     "drillthroughSection",
     "navigationSection",
+    "qna",
+    "webUrl",
     "disabledTooltip",
     "enabledTooltip",
     "tooltip"
@@ -396,6 +398,30 @@ export async function syncGeneratedPageNavigators(project) {
   await updateAllPageNavigators(project);
 }
 
+export async function refreshCrossReportDrillthroughSetting(project) {
+  let hasCrossReportDrillthrough = false;
+  for (const pageName of listPageNames(project)) {
+    const definition = getPage(project, pageName);
+    if (
+      definition.pageBinding?.type === "Drillthrough" &&
+      definition.pageBinding?.referenceScope === "CrossReport"
+    ) {
+      hasCrossReportDrillthrough = true;
+      break;
+    }
+  }
+
+  const reportDefinition = getReportDefinition(project);
+  reportDefinition.settings = reportDefinition.settings || {};
+  reportDefinition.settings.useCrossReportDrillthrough = hasCrossReportDrillthrough;
+  writeReportDefinition(project, reportDefinition);
+
+  const validation = summarizeValidationResults(await validateJsonFiles([reportFile(project)]));
+  if (!validation.valid) {
+    throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
+  }
+}
+
 export async function refreshApplyAllSlicersSetting(project) {
   let hasSlicerActionButton = false;
   for (const pageName of listPageNames(project)) {
@@ -432,7 +458,7 @@ function ensurePageBindingType(project, pageName, expectedType) {
   return page;
 }
 
-export async function configureDrillthroughPage(project, request) {
+async function configureDrillthroughPageInternal(project, request, options = {}) {
   ensureExists(request.pageName, "pageName is required.");
   ensureExists(request.fieldRefs?.length, "fieldRefs are required for drillthrough configuration.");
   refreshSemanticModel(project);
@@ -458,7 +484,7 @@ export async function configureDrillthroughPage(project, request) {
   definition.pageBinding = {
     name: request.bindingName || `${request.pageName}_Drillthrough`,
     type: "Drillthrough",
-    referenceScope: "Default",
+    referenceScope: options.referenceScope || "Default",
     acceptsFilterContext: normalizeFilterContext(request.acceptsFilterContext),
     parameters
   };
@@ -470,7 +496,9 @@ export async function configureDrillthroughPage(project, request) {
   writeJson(pageFile(project, request.pageName), definition);
 
   let backButton = null;
-  if (request.autoCreateBackButton !== false) {
+  const autoCreateBackButton =
+    request.autoCreateBackButton ?? options.defaultAutoCreateBackButton ?? true;
+  if (autoCreateBackButton) {
     backButton = await createControl(project, {
       pageName: request.pageName,
       controlType: "backButton",
@@ -488,6 +516,8 @@ export async function configureDrillthroughPage(project, request) {
     });
   }
 
+  await refreshCrossReportDrillthroughSetting(project);
+
   const validation = summarizeValidationResults(await validateJsonFiles([pageFile(project, request.pageName)]));
   if (!validation.valid) {
     throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
@@ -497,6 +527,20 @@ export async function configureDrillthroughPage(project, request) {
     page: getPage(project, request.pageName),
     backButton
   };
+}
+
+export async function configureDrillthroughPage(project, request) {
+  return configureDrillthroughPageInternal(project, request, {
+    referenceScope: "Default",
+    defaultAutoCreateBackButton: true
+  });
+}
+
+export async function configureCrossReportDrillthroughPage(project, request) {
+  return configureDrillthroughPageInternal(project, request, {
+    referenceScope: "CrossReport",
+    defaultAutoCreateBackButton: false
+  });
 }
 
 export async function clearDrillthroughPage(project, request) {
@@ -528,7 +572,19 @@ export async function clearDrillthroughPage(project, request) {
     throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
   }
 
+  await refreshCrossReportDrillthroughSetting(project);
+
   return getPage(project, request.pageName);
+}
+
+export async function clearCrossReportDrillthroughPage(project, request) {
+  const definition = getPage(project, request.pageName);
+  ensureExists(
+    definition.pageBinding?.type === "Drillthrough" &&
+      definition.pageBinding?.referenceScope === "CrossReport",
+    `Target page is not configured for cross-report drillthrough: ${request.pageName}`
+  );
+  return clearDrillthroughPage(project, request);
 }
 
 export async function configureTooltipPage(project, request) {
@@ -792,6 +848,26 @@ export async function createControl(project, request) {
       });
       setAnnotation(definition, "codex.slicerAction", "ClearAllSlicers");
       break;
+    case "webUrlButton": {
+      const webUrl = request.webUrl || request.action?.webUrl;
+      ensureExists(webUrl, "webUrl is required for web URL buttons.");
+      setVisualLink(definition, {
+        type: "WebUrl",
+        webUrl
+      });
+      setAnnotation(definition, "codex.webUrl", webUrl);
+      break;
+    }
+    case "qnaButton": {
+      const qnaQuestion = request.qnaQuestion || request.action?.qna;
+      ensureExists(qnaQuestion, "qnaQuestion is required for Q&A buttons.");
+      setVisualLink(definition, {
+        type: "Qna",
+        qna: qnaQuestion
+      });
+      setAnnotation(definition, "codex.qnaQuestion", qnaQuestion);
+      break;
+    }
     default:
       throw new Error(`Unsupported control type: ${request.controlType}`);
   }
@@ -911,6 +987,32 @@ export async function updateControl(project, request) {
       });
       setAnnotation(existingDefinition, "codex.slicerAction", "ClearAllSlicers");
       break;
+    case "webUrlButton": {
+      const webUrl =
+        request.webUrl ||
+        request.action?.webUrl ||
+        getAnnotation(existingDefinition, "codex.webUrl");
+      ensureExists(webUrl, "webUrl is required for web URL buttons.");
+      setVisualLink(existingDefinition, {
+        type: "WebUrl",
+        webUrl
+      });
+      setAnnotation(existingDefinition, "codex.webUrl", webUrl);
+      break;
+    }
+    case "qnaButton": {
+      const qnaQuestion =
+        request.qnaQuestion ||
+        request.action?.qna ||
+        getAnnotation(existingDefinition, "codex.qnaQuestion");
+      ensureExists(qnaQuestion, "qnaQuestion is required for Q&A buttons.");
+      setVisualLink(existingDefinition, {
+        type: "Qna",
+        qna: qnaQuestion
+      });
+      setAnnotation(existingDefinition, "codex.qnaQuestion", qnaQuestion);
+      break;
+    }
     default:
       throw new Error(`Unsupported control type: ${controlType}`);
   }

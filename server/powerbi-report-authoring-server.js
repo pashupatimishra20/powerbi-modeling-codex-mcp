@@ -15,6 +15,7 @@ import {
 } from "../src/report-authoring/constants.js";
 import {
   handleBookmarkOperation,
+  handleCompositionOperation,
   handleFieldParameterOperation,
   handleInteractionOperation,
   handleMobileLayoutOperation,
@@ -48,6 +49,8 @@ async function dispatchTool(name, args) {
       return handleFieldParameterOperation(request);
     case "report_mobile_layout_operations":
       return handleMobileLayoutOperation(request);
+    case "report_composition_operations":
+      return handleCompositionOperation(request);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

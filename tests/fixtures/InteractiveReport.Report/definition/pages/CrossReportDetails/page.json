@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "CrossReportDetails",
+  "displayName": "Cross Report Details",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visibility": "HiddenInViewMode",
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "CrossReportDetails_DrillthroughFilter_1",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Sales"
+              }
+            },
+            "Property": "Category"
+          }
+        },
+        "type": "Include",
+        "howCreated": "Drillthrough",
+        "isHiddenInViewMode": true,
+        "isLockedInViewMode": true
+      }
+    ]
+  },
+  "pageBinding": {
+    "name": "CrossReportDetails_Drillthrough",
+    "type": "Drillthrough",
+    "referenceScope": "CrossReport",
+    "acceptsFilterContext": "Default",
+    "parameters": [
+      {
+        "name": "DrillthroughParam_1",
+        "boundFilter": "CrossReportDetails_DrillthroughFilter_1",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Sales"
+              }
+            },
+            "Property": "Category"
+          }
+        }
+      }
+    ]
+  }
+}

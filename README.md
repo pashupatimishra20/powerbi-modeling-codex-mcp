@@ -4,9 +4,9 @@ A Codex plugin and standalone Codex skill bundle that integrate the official Mic
 
 ## Current Release
 
-- Version: `0.7.0`
-- Milestone: `Phase 3 - Local PBIR UX Parity and Authoring Breadth`
-- Highlights: tooltip pages, page navigation, apply/clear slicers buttons, visual interaction matrices, added chart coverage, hierarchy slicers, and per-visual mobile layout metadata
+- Version: `0.8.0`
+- Milestone: `Phase 4 - Composition Authoring and Cross-Report Drillthrough`
+- Highlights: grouped visuals, visibility and layer-order authoring, align/distribute/resize composition tools, cross-report drillthrough targets, and web URL/Q&A action buttons
 
 ## Upstream Acknowledgment
 
@@ -110,6 +110,8 @@ After install, restart Codex desktop so the plugin and bundled standalone skills
 - `USE powerbi-modeling-mcp create a field parameter for Category, Month, and Net Sales and wire it to a slicer`
 - `USE powerbi-modeling-mcp configure a tooltip page and assign it to a chart`
 - `USE powerbi-modeling-mcp create a page navigator and apply-all-slicers button on Executive Summary`
+- `USE powerbi-modeling-mcp group the slicer, bookmark button, and web URL button into a header composition and align them`
+- `USE powerbi-modeling-mcp configure a cross-report drillthrough target page on Sales[Category]`
 - `USE powerbi-modeling-mcp auto-create mobile layout metadata for my Overview page`
 
 ## Regenerate operations catalog
@@ -153,11 +155,12 @@ The local report-authoring MCP adds these tool families:
 - `report_page_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `Duplicate`
 - `report_visual_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Duplicate`, `Move`, `BindFields`, `SetFormatting`
 - `report_bookmark_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`
-- `report_interaction_operations`: `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `ConfigureTooltipPage`, `ClearTooltipPage`, `AssignTooltip`, `SetVisualInteractions`, `SetSlicerSync`, `CreatePageNavigationButton`, `CreatePageNavigator`, `CreateSlicerActionButton`, `CreateControl`, `UpdateControl`
+- `report_interaction_operations`: `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `ConfigureCrossReportDrillthroughPage`, `ClearCrossReportDrillthroughPage`, `ConfigureTooltipPage`, `ClearTooltipPage`, `AssignTooltip`, `SetVisualInteractions`, `SetSlicerSync`, `CreatePageNavigationButton`, `CreatePageNavigator`, `CreateSlicerActionButton`, `CreateWebUrlButton`, `CreateQnaButton`, `CreateControl`, `UpdateControl`
 - `report_field_parameter_operations`: `List`, `Create`, `Update`, `Delete`, `BindVisual`, `CreateSlicerControl`
 - `report_mobile_layout_operations`: `List`, `Get`, `AutoCreateFromDesktop`, `PlaceVisual`, `UpdateVisual`, `RemoveVisual`, `Clear`
+- `report_composition_operations`: `ListGroups`, `GetGroup`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`, `AddToGroup`, `RemoveFromGroup`, `Ungroup`, `SetVisibility`, `SetLayerOrder`, `Align`, `Distribute`, `ResizeToFit`
 
-Phase 3 local PBIR authoring now supports:
+Phase 4 local PBIR authoring now supports:
 
 - `card`
 - `multiRowCard`
@@ -182,13 +185,21 @@ Phase 3 local PBIR authoring now supports:
 - slicer sync groups
 - apply-all-slicers and clear-all-slicers buttons
 - back, bookmark, drillthrough, and page-navigation buttons plus generated bookmark/page navigators
+- web URL and Q&A action buttons
+- grouped visuals with real PBIR `visualGroup` containers and `parentGroupName`
+- selection-pane style visibility and layer-order metadata through `isHidden`, `z`, and `tabOrder`
+- align, distribute, and resize-to-fit composition operations
+- cross-report drillthrough page targets with `referenceScope: "CrossReport"` and `settings.useCrossReportDrillthrough`
 - mobile layout authoring through per-visual `mobile.json` files
 - field-parameter orchestration through the official modeling MCP with local PBIR wiring
 
-Typical phase-3 workflows:
+Typical phase-4 workflows:
 
 - create a tooltip page and assign it to one or more visuals
 - create a page navigator that stays in sync with page rename, reorder, hide, and duplicate operations
 - add apply-all-slicers and clear-all-slicers buttons for page-wide slicer control
 - author explicit source-to-target visual interaction rules on a report page
+- group visuals or nested groups, then hide, reorder, align, distribute, or resize them as a composition unit
+- create cross-report drillthrough targets and enable service-compatible report settings in PBIR metadata
+- add web URL and Q&A buttons using `visualLink`
 - generate or update `mobile.json` layout metadata for PBIR visuals

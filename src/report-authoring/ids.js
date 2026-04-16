@@ -29,3 +29,8 @@ export function createBookmarkGroupName(preferredName) {
   const sanitized = sanitizeFragment(preferredName);
   return sanitized ? sanitized : `BookmarkGroup_${createId(12)}`;
 }
+
+export function createGroupName(preferredName) {
+  const sanitized = sanitizeFragment(preferredName);
+  return sanitized ? sanitized : `VisualGroup_${createId(12)}`;
+}

@@ -13,6 +13,7 @@
     "useStylableVisualContainerHeader": true,
     "defaultFilterActionIsDataFilter": true,
     "defaultDrillFilterOtherVisuals": true,
+    "useCrossReportDrillthrough": true,
     "allowChangeFilterTypes": true,
     "useEnhancedTooltips": true,
     "useDefaultAggregateDisplayName": true

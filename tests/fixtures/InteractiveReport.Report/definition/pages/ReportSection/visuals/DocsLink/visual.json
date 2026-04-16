@@ -1,23 +1,23 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "BookmarkUrban",
+  "name": "DocsLink",
   "parentGroupName": "ActionsGroup",
   "position": {
     "x": 320,
-    "y": 0,
-    "z": 1,
+    "y": 52,
+    "z": 2,
     "width": 180,
     "height": 44,
-    "tabOrder": 1
+    "tabOrder": 2
   },
   "annotations": [
     {
       "name": "codex.controlType",
-      "value": "bookmarkButton"
+      "value": "webUrlButton"
     },
     {
-      "name": "codex.bookmarkName",
-      "value": "UrbanView"
+      "name": "codex.webUrl",
+      "value": "https://learn.microsoft.com/power-bi/"
     }
   ],
   "visual": {
@@ -36,7 +36,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Urban'"
+                  "Value": "'Docs'"
                 }
               }
             }
@@ -56,14 +56,14 @@
             "type": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bookmark'"
+                  "Value": "'WebUrl'"
                 }
               }
             },
-            "bookmark": {
+            "webUrl": {
               "expr": {
                 "Literal": {
-                  "Value": "'UrbanView'"
+                  "Value": "'https://learn.microsoft.com/power-bi/'"
                 }
               }
             }

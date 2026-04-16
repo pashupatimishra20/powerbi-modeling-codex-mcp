@@ -5,6 +5,21 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  addToGroup,
+  align,
+  createGroup,
+  deleteGroup,
+  distribute,
+  getGroup,
+  listGroups,
+  removeFromGroup,
+  resizeToFit,
+  setLayerOrder,
+  setVisibility,
+  ungroup,
+  updateGroup
+} from "../src/report-authoring/composition-service.js";
+import {
   createBookmark,
   createBookmarkGroup,
   deleteBookmark,
@@ -25,8 +40,10 @@ import {
 } from "../src/report-authoring/field-parameter-service.js";
 import {
   clearDrillthroughPage,
+  clearCrossReportDrillthroughPage,
   clearTooltipPage,
   configureTooltipPage,
+  configureCrossReportDrillthroughPage,
   configureDrillthroughPage,
   assignTooltip,
   createControl,
@@ -110,11 +127,17 @@ test("opens and validates the interactive PBIR fixture", async () => {
   const project = openProject(reportRoot);
   const validation = await validateProject(project);
   assert.equal(validation.valid, true);
-  assert.equal(listPages(project).length, 3);
+  assert.equal(listPages(project).length, 4);
   assert.equal(listBookmarks(project).length, 1);
   assert.equal(getPage(project, "Details").pageBinding.type, "Drillthrough");
+  assert.equal(getPage(project, "CrossReportDetails").pageBinding.referenceScope, "CrossReport");
   assert.equal(getPage(project, "TooltipPage").pageBinding.type, "Tooltip");
+  assert.equal(JSON.parse(fs.readFileSync(reportFile(project), "utf8")).settings.useCrossReportDrillthrough, true);
   assert.equal(getVisual(project, "ReportSection", "CategorySyncSlicer").visual.syncGroup.groupName, "CategoryPages");
+  assert.equal(getVisual(project, "ReportSection", "CategorySyncSlicer").parentGroupName, "SelectionGroup");
+  assert.equal(getVisual(project, "ReportSection", "DocsLink").visual.visualContainerObjects.visualLink[0].properties.webUrl.expr.Literal.Value, "'https://learn.microsoft.com/power-bi/'");
+  assert.equal(getVisual(project, "ReportSection", "AskSalesQuestion").visual.visualContainerObjects.visualLink[0].properties.qna.expr.Literal.Value, "'Show top categories by sales'");
+  assert.equal(getGroup(project, { pageName: "ReportSection", groupName: "SelectionGroup" }).childNames.length >= 2, true);
   assert.equal(listMobileLayouts(project, "ReportSection").length, 1);
 });
 
@@ -414,6 +437,69 @@ test("configures drillthrough, slicer sync, and interactive controls", async () 
   assert.equal(cleared.pageBinding, undefined);
 });
 
+test("configures cross-report drillthrough and richer action buttons", async () => {
+  const { reportRoot } = copyFixtureProject();
+  const project = openProject(reportRoot);
+
+  await createPage(project, {
+    pageName: "CrossReportTarget",
+    displayName: "Cross Report Target"
+  });
+
+  const configured = await configureCrossReportDrillthroughPage(project, {
+    pageName: "CrossReportTarget",
+    fieldRefs: ["Sales[Category]"]
+  });
+  assert.equal(configured.page.pageBinding.referenceScope, "CrossReport");
+  assert.equal(configured.backButton, null);
+  assert.equal(
+    JSON.parse(fs.readFileSync(reportFile(project), "utf8")).settings.useCrossReportDrillthrough,
+    true
+  );
+
+  const webUrlButton = await createControl(project, {
+    pageName: "ReportSection",
+    controlType: "webUrlButton",
+    controlName: "OpenDocs",
+    title: "Open docs",
+    webUrl: "https://learn.microsoft.com/power-bi/"
+  });
+  assert.equal(
+    webUrlButton.visual.visualContainerObjects.visualLink[0].properties.webUrl.expr.Literal.Value,
+    "'https://learn.microsoft.com/power-bi/'"
+  );
+
+  const qnaButton = await createControl(project, {
+    pageName: "ReportSection",
+    controlType: "qnaButton",
+    controlName: "AskQna",
+    title: "Ask",
+    qnaQuestion: "Show top categories by sales"
+  });
+  assert.equal(
+    qnaButton.visual.visualContainerObjects.visualLink[0].properties.qna.expr.Literal.Value,
+    "'Show top categories by sales'"
+  );
+
+  const updatedQnaButton = await updateControl(project, {
+    pageName: "ReportSection",
+    controlName: "AskQna",
+    qnaQuestion: "Show sales by month"
+  });
+  assert.equal(
+    updatedQnaButton.visual.visualContainerObjects.visualLink[0].properties.qna.expr.Literal.Value,
+    "'Show sales by month'"
+  );
+
+  await clearCrossReportDrillthroughPage(project, {
+    pageName: "CrossReportTarget"
+  });
+  assert.equal(
+    JSON.parse(fs.readFileSync(reportFile(project), "utf8")).settings.useCrossReportDrillthrough,
+    false
+  );
+});
+
 test("configures tooltip pages, visual interactions, slicer action buttons, and mobile layouts", async () => {
   const { reportRoot } = copyFixtureProject();
   const project = openProject(reportRoot);
@@ -575,6 +661,143 @@ test("keeps generated page navigators in sync with page mutations", async () => 
     }),
     false
   );
+});
+
+test("manages grouped visuals, visibility, layering, layout, and bookmark compatibility", async () => {
+  const { reportRoot } = copyFixtureProject();
+  const project = openProject(reportRoot);
+
+  const chart = await createVisual(project, {
+    pageName: "ReportSection",
+    name: "TrendChart",
+    visualType: "clusteredColumnChart",
+    bindings: {
+      category: ["Sales[Category]"],
+      values: ["[Total Sales]"]
+    },
+    layout: { x: 420, y: 240, width: 260, height: 180 }
+  });
+  const text = await createVisual(project, {
+    pageName: "ReportSection",
+    name: "CaptionBox",
+    visualType: "textbox",
+    textValue: "Summary",
+    layout: { x: 720, y: 280, width: 180, height: 80 }
+  });
+  const card = await createVisual(project, {
+    pageName: "ReportSection",
+    name: "SummaryCard",
+    visualType: "card",
+    bindings: { values: ["[Total Sales]"] },
+    layout: { x: 960, y: 260, width: 180, height: 120 }
+  });
+
+  const group = await createGroup(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup",
+    displayName: "Insight Group",
+    visualNames: [chart.name, text.name]
+  });
+  assert.deepEqual(group.childNames.sort(), [chart.name, text.name].sort());
+  assert.equal(getVisual(project, "ReportSection", chart.name).parentGroupName, "InsightGroup");
+
+  const nested = await createGroup(project, {
+    pageName: "ReportSection",
+    groupName: "CompositeGroup",
+    displayName: "Composite Group",
+    visualNames: ["InsightGroup", card.name]
+  });
+  assert.equal(nested.childNames.includes("InsightGroup"), true);
+
+  const listed = listGroups(project, { pageName: "ReportSection" });
+  assert.equal(listed.some((entry) => entry.name === "CompositeGroup"), true);
+
+  const updatedGroup = await updateGroup(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup",
+    displayName: "Insight Display",
+    visibility: false
+  });
+  assert.equal(updatedGroup.hidden, true);
+
+  const visibility = await setVisibility(project, {
+    pageName: "ReportSection",
+    visualNames: [card.name],
+    visibility: false
+  });
+  assert.equal(visibility.visuals[0].hidden, true);
+
+  const layerResult = await setLayerOrder(project, {
+    pageName: "ReportSection",
+    visualNames: [card.name],
+    layerAction: "BringToFront"
+  });
+  const sortedLayers = [...layerResult.visuals].sort((left, right) => right.z - left.z);
+  assert.equal(sortedLayers[0].name, card.name);
+  assert.equal(new Set(layerResult.visuals.map((item) => item.z)).size, layerResult.visuals.length);
+  assert.equal(
+    new Set(layerResult.visuals.map((item) => item.tabOrder)).size,
+    layerResult.visuals.length
+  );
+
+  await align(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup",
+    alignment: "top"
+  });
+  const alignedChart = getVisual(project, "ReportSection", chart.name);
+  const alignedText = getVisual(project, "ReportSection", text.name);
+  assert.equal(alignedChart.position.y, alignedText.position.y);
+
+  await distribute(project, {
+    pageName: "ReportSection",
+    visualNames: [chart.name, text.name, card.name],
+    distribution: "horizontal"
+  });
+  const distributed = [chart.name, text.name, card.name]
+    .map((name) => getVisual(project, "ReportSection", name))
+    .sort((left, right) => left.position.x - right.position.x);
+  assert.equal(distributed[0].position.x < distributed[1].position.x, true);
+  assert.equal(distributed[1].position.x < distributed[2].position.x, true);
+
+  await removeFromGroup(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup",
+    visualNames: [text.name]
+  });
+  assert.equal(getVisual(project, "ReportSection", text.name).parentGroupName, undefined);
+
+  await addToGroup(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup",
+    visualNames: [text.name]
+  });
+  assert.equal(getVisual(project, "ReportSection", text.name).parentGroupName, "InsightGroup");
+
+  const resized = await resizeToFit(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup"
+  });
+  assert.equal(resized.position.width > 0, true);
+
+  const bookmark = await createBookmark(project, {
+    bookmarkName: "GroupedView",
+    displayName: "Grouped View",
+    pageName: "ReportSection"
+  });
+  assert.ok(bookmark.explorationState.sections.ReportSection.visualContainers.InsightGroup);
+
+  const deleted = await ungroup(project, {
+    pageName: "ReportSection",
+    groupName: "CompositeGroup"
+  });
+  assert.equal(deleted.groups.some((entry) => entry.name === "CompositeGroup"), false);
+
+  const deletedGroup = await deleteGroup(project, {
+    pageName: "ReportSection",
+    groupName: "InsightGroup"
+  });
+  assert.equal(deletedGroup.groups.some((entry) => entry.name === "InsightGroup"), false);
 });
 
 test("creates, updates, deletes, and binds field parameters via the modeling MCP wrapper", async () => {

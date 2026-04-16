@@ -1,5 +1,5 @@
 export const REPORT_PROJECT_SERVER_NAME = "powerbi-report-authoring-mcp";
-export const REPORT_PROJECT_SERVER_VERSION = "0.7.0";
+export const REPORT_PROJECT_SERVER_VERSION = "0.8.0";
 
 export const SCHEMA_URLS = {
   definitionProperties:
@@ -94,7 +94,9 @@ export const SUPPORTED_CONTROL_TYPES = [
   "pageNavigationButton",
   "pageNavigator",
   "applyAllSlicersButton",
-  "clearAllSlicersButton"
+  "clearAllSlicersButton",
+  "webUrlButton",
+  "qnaButton"
 ];
 
 export const TOOL_DEFINITIONS = {
@@ -140,10 +142,12 @@ export const TOOL_DEFINITIONS = {
   },
   report_interaction_operations: {
     description:
-      "Configure PBIR drillthrough, tooltips, visual interactions, slicer sync, and interactive controls. Supported operations: ConfigureDrillthroughPage, ClearDrillthroughPage, ConfigureTooltipPage, ClearTooltipPage, AssignTooltip, SetVisualInteractions, SetSlicerSync, CreatePageNavigationButton, CreatePageNavigator, CreateSlicerActionButton, CreateControl, UpdateControl.",
+      "Configure PBIR drillthrough, tooltips, visual interactions, slicer sync, and interactive controls. Supported operations: ConfigureDrillthroughPage, ClearDrillthroughPage, ConfigureCrossReportDrillthroughPage, ClearCrossReportDrillthroughPage, ConfigureTooltipPage, ClearTooltipPage, AssignTooltip, SetVisualInteractions, SetSlicerSync, CreatePageNavigationButton, CreatePageNavigator, CreateSlicerActionButton, CreateWebUrlButton, CreateQnaButton, CreateControl, UpdateControl.",
     operations: [
       "ConfigureDrillthroughPage",
       "ClearDrillthroughPage",
+      "ConfigureCrossReportDrillthroughPage",
+      "ClearCrossReportDrillthroughPage",
       "ConfigureTooltipPage",
       "ClearTooltipPage",
       "AssignTooltip",
@@ -152,6 +156,8 @@ export const TOOL_DEFINITIONS = {
       "CreatePageNavigationButton",
       "CreatePageNavigator",
       "CreateSlicerActionButton",
+      "CreateWebUrlButton",
+      "CreateQnaButton",
       "CreateControl",
       "UpdateControl"
     ]
@@ -165,6 +171,25 @@ export const TOOL_DEFINITIONS = {
     description:
       "Author PBIR visual mobile layout metadata. Supported operations: List, Get, AutoCreateFromDesktop, PlaceVisual, UpdateVisual, RemoveVisual, Clear.",
     operations: ["List", "Get", "AutoCreateFromDesktop", "PlaceVisual", "UpdateVisual", "RemoveVisual", "Clear"]
+  },
+  report_composition_operations: {
+    description:
+      "Author PBIR visual grouping, visibility, layer order, and layout composition metadata. Supported operations: ListGroups, GetGroup, CreateGroup, UpdateGroup, DeleteGroup, AddToGroup, RemoveFromGroup, Ungroup, SetVisibility, SetLayerOrder, Align, Distribute, ResizeToFit.",
+    operations: [
+      "ListGroups",
+      "GetGroup",
+      "CreateGroup",
+      "UpdateGroup",
+      "DeleteGroup",
+      "AddToGroup",
+      "RemoveFromGroup",
+      "Ungroup",
+      "SetVisibility",
+      "SetLayerOrder",
+      "Align",
+      "Distribute",
+      "ResizeToFit"
+    ]
   }
 };
 
@@ -328,6 +353,8 @@ export const TOOL_SCHEMAS = {
           tooltipPageName: { type: ["string", "null"] },
           targetPageName: { type: ["string", "null"] },
           deselectionBookmarkName: { type: ["string", "null"] },
+          webUrl: { type: ["string", "null"] },
+          qnaQuestion: { type: ["string", "null"] },
           orientation: { type: ["string", "null"] },
           showHiddenPages: { type: ["boolean", "null"] },
           showTooltipPages: { type: ["boolean", "null"] },
@@ -419,6 +446,37 @@ export const TOOL_SCHEMAS = {
           layout: { type: ["object", "null"] },
           format: { type: ["object", "null"] },
           autoPosition: { type: ["boolean", "null"] }
+        },
+        required: ["operation"],
+        additionalProperties: true
+      }
+    },
+    required: ["request"],
+    additionalProperties: false
+  },
+  report_composition_operations: {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: TOOL_DEFINITIONS.report_composition_operations.operations
+          },
+          ...sharedRequestProperties,
+          pageName: { type: ["string", "null"] },
+          visualName: { type: ["string", "null"] },
+          visualNames: { type: ["array", "null"], items: { type: "string" } },
+          groupName: { type: ["string", "null"] },
+          displayName: { type: ["string", "null"] },
+          parentGroupName: { type: ["string", "null"] },
+          layout: { type: ["object", "null"] },
+          visibility: { type: ["boolean", "null"] },
+          groupMode: { type: ["string", "null"] },
+          alignment: { type: ["string", "null"] },
+          distribution: { type: ["string", "null"] },
+          layerAction: { type: ["string", "null"] }
         },
         required: ["operation"],
         additionalProperties: true

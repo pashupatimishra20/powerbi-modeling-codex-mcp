@@ -1,25 +1,14 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "BookmarkUrban",
-  "parentGroupName": "ActionsGroup",
+  "name": "web_url_button_template",
   "position": {
-    "x": 320,
+    "x": 0,
     "y": 0,
-    "z": 1,
-    "width": 180,
+    "z": 0,
+    "width": 160,
     "height": 44,
-    "tabOrder": 1
+    "tabOrder": 0
   },
-  "annotations": [
-    {
-      "name": "codex.controlType",
-      "value": "bookmarkButton"
-    },
-    {
-      "name": "codex.bookmarkName",
-      "value": "UrbanView"
-    }
-  ],
   "visual": {
     "visualType": "actionButton",
     "visualContainerObjects": {
@@ -36,7 +25,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Urban'"
+                  "Value": "'Open link'"
                 }
               }
             }
@@ -50,20 +39,6 @@
               "expr": {
                 "Literal": {
                   "Value": "true"
-                }
-              }
-            },
-            "type": {
-              "expr": {
-                "Literal": {
-                  "Value": "'Bookmark'"
-                }
-              }
-            },
-            "bookmark": {
-              "expr": {
-                "Literal": {
-                  "Value": "'UrbanView'"
                 }
               }
             }

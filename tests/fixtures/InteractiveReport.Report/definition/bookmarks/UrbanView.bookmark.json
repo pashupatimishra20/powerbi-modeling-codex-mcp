@@ -8,13 +8,21 @@
     "sections": {
       "ReportSection": {
         "visualContainers": {
+          "SelectionGroup": {},
+          "ActionsGroup": {},
           "CategorySyncSlicer": {},
-          "BookmarkUrban": {}
+          "BookmarkUrban": {},
+          "DocsLink": {},
+          "AskSalesQuestion": {}
         }
       },
       "Details": {
         "visualContainers": {
           "BackToOverview": {}
+        }
+      },
+      "CrossReportDetails": {
+        "visualContainers": {
         }
       }
     }

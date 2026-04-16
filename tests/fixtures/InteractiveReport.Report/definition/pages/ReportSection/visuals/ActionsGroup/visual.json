@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "ActionsGroup",
+  "parentGroupName": "SelectionGroup",
+  "isHidden": true,
+  "position": {
+    "x": 320,
+    "y": 0,
+    "z": 1,
+    "width": 380,
+    "height": 96,
+    "tabOrder": 1
+  },
+  "visualGroup": {
+    "displayName": "Actions Group",
+    "groupMode": "ScaleMode"
+  }
+}
