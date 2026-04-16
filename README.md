@@ -30,10 +30,7 @@ This project is built on top of Microsoft's official Power BI Modeling MCP serve
 - Installer script: `scripts/install-local.ps1`
 - Uninstaller script: `scripts/uninstall-local.ps1`
 - Bootstrap installer (one command): `scripts/bootstrap-install.ps1`
-- GitHub Pages entry file: `index.html`
-- End-user guide page (same content): `end-user-guide.html`
-
-Open the guide directly in a browser for onboarding visuals and copy-ready commands.
+- GitHub Pages entry file and public docs landing page: `index.html`
 
 ## GitHub Pages
 

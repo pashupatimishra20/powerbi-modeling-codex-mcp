@@ -1,11 +1,37 @@
-# Build artifacts
+# Dependencies
 node_modules/
 
-# Temporary files
-*.log
-*.tmp
+# Build and test output
+.cache/
+.nyc_output/
+coverage/
+build/
+dist/
+
+# Environment and local overrides
+.env
+.env.*
+!.env.example
+*.local
+
+# Editor and IDE files
+.idea/
+.vscode/
+*.code-workspace
+
+# Temporary and patch files
 *.bak
+*.log
+*.orig
+*.rej
+*.tmp
+*~
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local-only outreach and duplicate public docs
+linkedin-post.md
+reddit-post.md
+end-user-guide.html
