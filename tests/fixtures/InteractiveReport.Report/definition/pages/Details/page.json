@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
+  "name": "Details",
+  "displayName": "Details",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visibility": "HiddenInViewMode",
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "Details_DrillthroughFilter_1",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Sales"
+              }
+            },
+            "Property": "Category"
+          }
+        },
+        "type": "Include",
+        "howCreated": "Drillthrough",
+        "isHiddenInViewMode": true,
+        "isLockedInViewMode": true
+      }
+    ]
+  },
+  "pageBinding": {
+    "name": "Details_Drillthrough",
+    "type": "Drillthrough",
+    "referenceScope": "Default",
+    "acceptsFilterContext": "Default",
+    "parameters": [
+      {
+        "name": "DrillthroughParam_1",
+        "boundFilter": "Details_DrillthroughFilter_1",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Sales"
+              }
+            },
+            "Property": "Category"
+          }
+        }
+      }
+    ]
+  }
+}

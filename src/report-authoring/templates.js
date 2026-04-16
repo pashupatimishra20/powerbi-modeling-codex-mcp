@@ -8,13 +8,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATE_ROOT = path.resolve(__dirname, "../../assets/pbir-templates");
 
 const TEMPLATE_FILES = {
+  actionButton: "actionButton.visual.json",
+  backButton: "backButton.visual.json",
+  bookmarkButton: "bookmarkButton.visual.json",
+  bookmarkNavigator: "bookmarkNavigator.visual.json",
   card: "card.visual.json",
   multiRowCard: "multiRowCard.visual.json",
   tableEx: "tableEx.visual.json",
   columnChart: "columnChart.visual.json",
   clusteredBarChart: "clusteredBarChart.visual.json",
   pieChart: "pieChart.visual.json",
-  slicer: "slicer.visual.json"
+  slicer: "slicer.visual.json",
+  drillthroughButton: "drillthroughButton.visual.json"
 };
 
 let cache = null;
@@ -68,6 +73,15 @@ function createTextboxTemplate() {
   };
 }
 
+export function getControlTemplate(controlType) {
+  const templates = loadBaseTemplates();
+  const template = templates[controlType];
+  if (!template) {
+    throw new Error(`Unsupported control template: ${controlType}`);
+  }
+  return deepClone(template);
+}
+
 export function getVisualTemplate(visualType) {
   const templates = loadBaseTemplates();
   switch (visualType) {
@@ -100,6 +114,8 @@ export function getVisualTemplate(visualType) {
       return deepClone(templates.slicer);
     case "textbox":
       return createTextboxTemplate();
+    case "actionButton":
+      return deepClone(templates.actionButton);
     default:
       throw new Error(`Unsupported visual type: ${visualType}`);
   }

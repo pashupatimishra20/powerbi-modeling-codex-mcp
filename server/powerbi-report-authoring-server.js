@@ -14,6 +14,9 @@ import {
   TOOL_SCHEMAS
 } from "../src/report-authoring/constants.js";
 import {
+  handleBookmarkOperation,
+  handleFieldParameterOperation,
+  handleInteractionOperation,
   handlePageOperation,
   handleProjectOperation,
   handleVisualOperation
@@ -36,6 +39,12 @@ async function dispatchTool(name, args) {
       return handlePageOperation(request);
     case "report_visual_operations":
       return handleVisualOperation(request);
+    case "report_bookmark_operations":
+      return handleBookmarkOperation(request);
+    case "report_interaction_operations":
+      return handleInteractionOperation(request);
+    case "report_field_parameter_operations":
+      return handleFieldParameterOperation(request);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/1.0.0/schema.json",
+  "displayName": "Urban View",
+  "name": "UrbanView",
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "ReportSection",
+    "sections": {
+      "ReportSection": {
+        "visualContainers": {
+          "CategorySyncSlicer": {},
+          "BookmarkUrban": {}
+        }
+      },
+      "Details": {
+        "visualContainers": {
+          "BackToOverview": {}
+        }
+      }
+    }
+  },
+  "options": {
+    "suppressDisplay": false,
+    "suppressData": false
+  }
+}

@@ -4,6 +4,16 @@ import path from "node:path";
 import { getVisualTemplate } from "./templates.js";
 import { createVisualName } from "./ids.js";
 import { readJson, writeJson } from "./json.js";
+import {
+  booleanLiteral,
+  ensureArrayObject,
+  numberLiteral,
+  quoteLiteral
+} from "./format-utils.js";
+import {
+  buildFieldExpression,
+  buildFieldExpressionFromRef
+} from "./query-utils.js";
 import { resolveFieldReference } from "./semantic-model.js";
 import {
   summarizeValidationResults,
@@ -25,41 +35,7 @@ function ensureExists(value, message) {
   return value;
 }
 
-function quoteLiteral(value) {
-  const escaped = String(value ?? "").replace(/'/g, "''");
-  return {
-    expr: {
-      Literal: {
-        Value: `'${escaped}'`
-      }
-    }
-  };
-}
-
-function booleanLiteral(value) {
-  return {
-    expr: {
-      Literal: {
-        Value: value ? "true" : "false"
-      }
-    }
-  };
-}
-
-function ensureArrayObject(target, key) {
-  if (!target[key]) {
-    target[key] = [];
-  }
-  if (!target[key][0]) {
-    target[key][0] = { properties: {} };
-  }
-  if (!target[key][0].properties) {
-    target[key][0].properties = {};
-  }
-  return target[key][0].properties;
-}
-
-function normalizeLayout(layout = {}, currentPosition = {}) {
+export function normalizeLayout(layout = {}, currentPosition = {}) {
   return {
     x: layout.x ?? currentPosition.x ?? 0,
     y: layout.y ?? currentPosition.y ?? 0,
@@ -70,7 +46,7 @@ function normalizeLayout(layout = {}, currentPosition = {}) {
   };
 }
 
-function setTitle(visualDefinition, title) {
+export function setTitle(visualDefinition, title) {
   if (title == null) {
     return;
   }
@@ -79,9 +55,10 @@ function setTitle(visualDefinition, title) {
     visualDefinition.visual.visualContainerObjects || {};
   const titleProps = ensureArrayObject(visualDefinition.visual.visualContainerObjects, "title");
   titleProps.text = quoteLiteral(title);
+  titleProps.show = booleanLiteral(true);
 }
 
-function setSubtitle(visualDefinition, subtitle) {
+export function setSubtitle(visualDefinition, subtitle) {
   if (subtitle == null) {
     return;
   }
@@ -96,7 +73,7 @@ function setSubtitle(visualDefinition, subtitle) {
   subtitleProps.text = quoteLiteral(subtitle);
 }
 
-function setTextValue(visualDefinition, textValue) {
+export function setTextValue(visualDefinition, textValue) {
   if (textValue == null) {
     return;
   }
@@ -106,7 +83,7 @@ function setTextValue(visualDefinition, textValue) {
   generalProps.paragraphs = quoteLiteral(textValue);
 }
 
-function applyFormatting(visualDefinition, format = {}) {
+export function applyFormatting(visualDefinition, format = {}) {
   if (!format || typeof format !== "object") {
     return;
   }
@@ -132,6 +109,7 @@ function applyFormatting(visualDefinition, format = {}) {
     labelProps.show = booleanLiteral(Boolean(format.dataLabelsVisible));
   }
   if (format.background?.color) {
+    visualDefinition.visual.objects = visualDefinition.visual.objects || {};
     const backgroundProps = ensureArrayObject(visualDefinition.visual.objects, "background");
     backgroundProps.color = quoteLiteral(format.background.color);
   }
@@ -143,13 +121,7 @@ function applyFormatting(visualDefinition, format = {}) {
     visualDefinition.visual.visualContainerObjects =
       visualDefinition.visual.visualContainerObjects || {};
     const titleProps = ensureArrayObject(visualDefinition.visual.visualContainerObjects, "title");
-    titleProps.fontSize = {
-      expr: {
-        Literal: {
-          Value: String(format.fontSize)
-        }
-      }
-    };
+    titleProps.fontSize = numberLiteral(format.fontSize);
   }
 }
 
@@ -164,6 +136,7 @@ function getDefaultRoleBindings(visualType) {
         Values: ["values", "value", "rows", "columns", "category"]
       };
     case "textbox":
+    case "actionButton":
       return {};
     case "pieChart":
     case "clusteredBarChart":
@@ -211,73 +184,6 @@ function normalizeBindingsForVisual(visualType, bindings = {}) {
   return normalized;
 }
 
-function buildFieldExpression(parsedRef, aggregateColumns) {
-  if (parsedRef.kind === "column") {
-    const columnExpression = {
-      Column: {
-        Expression: {
-          SourceRef: {
-            Entity: parsedRef.tableName
-          }
-        },
-        Property: parsedRef.columnName
-      }
-    };
-
-    if (!aggregateColumns) {
-      return {
-        expression: columnExpression,
-        queryRef: `${parsedRef.tableName}.${parsedRef.columnName}`
-      };
-    }
-
-    return {
-      expression: {
-        Aggregation: {
-          Expression: columnExpression,
-          Function: 0
-        }
-      },
-      queryRef: `Sum(${parsedRef.tableName}.${parsedRef.columnName})`
-    };
-  }
-
-  if (parsedRef.kind === "measure") {
-    return {
-      expression: {
-        Measure: {
-          Expression: {
-            SourceRef: {
-              Entity: parsedRef.tableName
-            }
-          },
-          Property: parsedRef.measureName
-        }
-      },
-      queryRef: `${parsedRef.tableName}.${parsedRef.measureName}`
-    };
-  }
-
-  return {
-    expression: {
-      HierarchyLevel: {
-        Expression: {
-          Hierarchy: {
-            Expression: {
-              SourceRef: {
-                Entity: parsedRef.tableName
-              }
-            },
-            Hierarchy: parsedRef.hierarchyName
-          }
-        },
-        Level: parsedRef.levelName
-      }
-    },
-    queryRef: `${parsedRef.tableName}.${parsedRef.hierarchyName}.${parsedRef.levelName}`
-  };
-}
-
 function shouldAggregateRole(roleName, visualType) {
   if (visualType === "table" || visualType === "matrix" || visualType === "slicer") {
     return false;
@@ -286,13 +192,38 @@ function shouldAggregateRole(roleName, visualType) {
   return roleName === "Y" || (roleName === "Values" && visualType !== "multiRowCard");
 }
 
+function buildProjection(fieldRef, semanticModel, aggregateColumns) {
+  if (
+    typeof fieldRef === "object" &&
+    fieldRef?.expression &&
+    fieldRef?.queryRef
+  ) {
+    return {
+      field: fieldRef.expression,
+      queryRef: fieldRef.queryRef,
+      active: fieldRef.active ?? true,
+      displayName: fieldRef.displayName
+    };
+  }
+
+  const parsedRef =
+    typeof fieldRef === "string" ? resolveFieldReference(fieldRef, semanticModel) : fieldRef;
+  const built = buildFieldExpression(parsedRef, aggregateColumns);
+  return {
+    field: built.expression,
+    queryRef: built.queryRef
+  };
+}
+
 function buildQueryState(visualType, bindings, semanticModel) {
-  if (visualType === "textbox") {
+  if (visualType === "textbox" || visualType === "actionButton") {
     return null;
   }
 
   const normalizedBindings = normalizeBindingsForVisual(visualType, bindings);
-  const entries = Object.entries(normalizedBindings).filter(([, refs]) => Array.isArray(refs) && refs.length);
+  const entries = Object.entries(normalizedBindings).filter(
+    ([, refs]) => Array.isArray(refs) && refs.length
+  );
   if (!entries.length) {
     throw new Error(`Bindings are required for visual type ${visualType}.`);
   }
@@ -301,12 +232,14 @@ function buildQueryState(visualType, bindings, semanticModel) {
   for (const [roleName, refs] of entries) {
     queryState[roleName] = {
       projections: refs.map((ref, index) => {
-        const parsedRef = resolveFieldReference(ref, semanticModel);
-        const built = buildFieldExpression(parsedRef, shouldAggregateRole(roleName, visualType));
+        const projection = buildProjection(
+          ref,
+          semanticModel,
+          shouldAggregateRole(roleName, visualType)
+        );
         return {
-          field: built.expression,
-          queryRef: built.queryRef,
-          active: index === 0 || roleName !== "Values"
+          ...projection,
+          active: projection.active ?? (index === 0 || roleName !== "Values")
         };
       })
     };
@@ -317,13 +250,14 @@ function buildQueryState(visualType, bindings, semanticModel) {
 
 function createDefaultSort(bindings, visualType, semanticModel) {
   const normalizedBindings = normalizeBindingsForVisual(visualType, bindings);
-  const firstRole = normalizedBindings.Y?.[0] ?? normalizedBindings.Values?.[0] ?? normalizedBindings.Category?.[0];
-  if (!firstRole) {
+  const firstRole =
+    normalizedBindings.Y?.[0] ?? normalizedBindings.Values?.[0] ?? normalizedBindings.Category?.[0];
+  if (!firstRole || typeof firstRole !== "string") {
     return undefined;
   }
 
   const parsedRef = resolveFieldReference(firstRole, semanticModel);
-  const built = buildFieldExpression(parsedRef, parsedRef.kind === "column");
+  const built = buildFieldExpressionFromRef(parsedRef, semanticModel, parsedRef.kind === "column");
   return {
     sort: [
       {
@@ -336,7 +270,7 @@ function createDefaultSort(bindings, visualType, semanticModel) {
 }
 
 function refreshVisualQuery(visualDefinition, bindings, semanticModel, visualType, sortDefinition) {
-  if (visualType === "textbox") {
+  if (visualType === "textbox" || visualType === "actionButton") {
     delete visualDefinition.visual.query;
     return;
   }
@@ -355,6 +289,19 @@ function getTitle(visualDefinition) {
   return (
     visualDefinition.visual?.visualContainerObjects?.title?.[0]?.properties?.text?.expr?.Literal?.Value ?? null
   );
+}
+
+export async function saveVisualDefinition(project, pageName, definition) {
+  const filePath = visualFile(project, pageName, definition.name);
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  writeJson(filePath, definition);
+
+  const validation = summarizeValidationResults(await validateJsonFiles([filePath]));
+  if (!validation.valid) {
+    throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
+  }
+
+  return getVisual(project, pageName, definition.name);
 }
 
 export function listVisuals(project, pageName) {
@@ -407,16 +354,7 @@ export async function createVisual(project, request) {
     visualDefinition.filterConfig = request.filters;
   }
 
-  const filePath = visualFile(project, request.pageName, visualName);
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  writeJson(filePath, visualDefinition);
-
-  const validation = summarizeValidationResults(await validateJsonFiles([filePath]));
-  if (!validation.valid) {
-    throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
-  }
-
-  return getVisual(project, request.pageName, visualName);
+  return saveVisualDefinition(project, request.pageName, visualDefinition);
 }
 
 function updateVisualInternal(project, request, definition) {
@@ -459,13 +397,7 @@ function updateVisualInternal(project, request, definition) {
 export async function updateVisual(project, request) {
   const definition = getVisual(project, request.pageName, request.visualName);
   updateVisualInternal(project, request, definition);
-  const filePath = visualFile(project, request.pageName, request.visualName);
-  writeJson(filePath, definition);
-  const validation = summarizeValidationResults(await validateJsonFiles([filePath]));
-  if (!validation.valid) {
-    throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
-  }
-  return getVisual(project, request.pageName, request.visualName);
+  return saveVisualDefinition(project, request.pageName, definition);
 }
 
 export async function bindVisualFields(project, request) {
@@ -474,7 +406,10 @@ export async function bindVisualFields(project, request) {
 }
 
 export async function setVisualFormatting(project, request) {
-  ensureExists(request.format || request.title || request.subtitle || request.textValue, "Formatting payload is required.");
+  ensureExists(
+    request.format || request.title || request.subtitle || request.textValue,
+    "Formatting payload is required."
+  );
   return updateVisual(project, request);
 }
 
@@ -504,13 +439,7 @@ export async function duplicateVisual(project, request) {
   if (request.layout) {
     definition.position = normalizeLayout(request.layout, definition.position);
   }
-  writeJson(filePath, definition);
-
-  const validation = summarizeValidationResults(await validateJsonFiles([filePath]));
-  if (!validation.valid) {
-    throw new Error(JSON.stringify(validation.invalidFiles, null, 2));
-  }
-  return getVisual(project, destinationPageName, duplicateName);
+  return saveVisualDefinition(project, destinationPageName, definition);
 }
 
 export async function moveVisual(project, request) {

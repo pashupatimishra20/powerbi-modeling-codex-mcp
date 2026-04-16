@@ -53,6 +53,9 @@ node scripts/pbi_mcp_client.cjs call connection_operations "{\"request\":{\"oper
 report_project_operations -> OpenProject
 report_page_operations -> Create
 report_visual_operations -> Create / BindFields / SetFormatting
+report_bookmark_operations -> Create / Update / Reorder / CreateGroup
+report_interaction_operations -> ConfigureDrillthroughPage / SetSlicerSync / CreateControl
+report_field_parameter_operations -> Create / BindVisual / CreateSlicerControl
 ```
 
 ## Core Workflow
@@ -75,7 +78,10 @@ node scripts/pbi_mcp_client.cjs help measure_operations
 - Keep payload shape aligned with `HELP` examples (`Definitions`, `References`, `RenameDefinitions`, `MoveDefinitions`).
 - For report authoring, prefer explicit tool calls:
   - `report_page_operations` for page CRUD/reorder/duplicate
-  - `report_visual_operations` for visual CRUD/move/rebind/basic formatting
+  - `report_visual_operations` for visual CRUD/move/rebind/formatting
+  - `report_bookmark_operations` for bookmarks and bookmark groups
+  - `report_interaction_operations` for drillthrough, slicer sync, and interactive controls
+  - `report_field_parameter_operations` for field-parameter orchestration across model + report
 
 4. Validate:
 - Read back using `GET`/`LIST` operations.

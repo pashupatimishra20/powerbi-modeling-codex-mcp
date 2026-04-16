@@ -1,5 +1,5 @@
 export const REPORT_PROJECT_SERVER_NAME = "powerbi-report-authoring-mcp";
-export const REPORT_PROJECT_SERVER_VERSION = "0.5.0";
+export const REPORT_PROJECT_SERVER_VERSION = "0.6.0";
 
 export const SCHEMA_URLS = {
   definitionProperties:
@@ -13,7 +13,11 @@ export const SCHEMA_URLS = {
   page:
     "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/1.0.0/schema.json",
   visual:
-    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json"
+    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  bookmark:
+    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/1.0.0/schema.json",
+  bookmarks:
+    "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmarksMetadata/1.0.0/schema.json"
 };
 
 export const DEFAULT_PAGE_SIZE = {
@@ -55,6 +59,8 @@ export const DEFAULT_VERSION_METADATA = {
   version: "2.0.0"
 };
 
+export const DEFAULT_BOOKMARK_EXPLORATION_VERSION = "1.0";
+
 export const DEFAULT_DEFINITION_VERSION = "4.0";
 
 export const SUPPORTED_VISUAL_TYPES = [
@@ -67,7 +73,15 @@ export const SUPPORTED_VISUAL_TYPES = [
   "lineChart",
   "pieChart",
   "slicer",
-  "textbox"
+  "textbox",
+  "actionButton"
+];
+
+export const SUPPORTED_CONTROL_TYPES = [
+  "backButton",
+  "bookmarkButton",
+  "drillthroughButton",
+  "bookmarkNavigator"
 ];
 
 export const TOOL_DEFINITIONS = {
@@ -95,7 +109,42 @@ export const TOOL_DEFINITIONS = {
       "BindFields",
       "SetFormatting"
     ]
+  },
+  report_bookmark_operations: {
+    description:
+      "Perform operations on PBIR report bookmarks. Supported operations: List, Get, Create, Update, Delete, Reorder, CreateGroup, UpdateGroup, DeleteGroup.",
+    operations: [
+      "List",
+      "Get",
+      "Create",
+      "Update",
+      "Delete",
+      "Reorder",
+      "CreateGroup",
+      "UpdateGroup",
+      "DeleteGroup"
+    ]
+  },
+  report_interaction_operations: {
+    description:
+      "Configure PBIR drillthrough, slicer sync, and interactive controls. Supported operations: ConfigureDrillthroughPage, ClearDrillthroughPage, SetSlicerSync, CreateControl, UpdateControl.",
+    operations: [
+      "ConfigureDrillthroughPage",
+      "ClearDrillthroughPage",
+      "SetSlicerSync",
+      "CreateControl",
+      "UpdateControl"
+    ]
+  },
+  report_field_parameter_operations: {
+    description:
+      "Orchestrate Power BI field parameters across the semantic model MCP and PBIR report. Supported operations: List, Create, Update, Delete, BindVisual, CreateSlicerControl.",
+    operations: ["List", "Create", "Update", "Delete", "BindVisual", "CreateSlicerControl"]
   }
+};
+
+const sharedRequestProperties = {
+  projectPath: { type: ["string", "null"] }
 };
 
 export const TOOL_SCHEMAS = {
@@ -109,7 +158,7 @@ export const TOOL_SCHEMAS = {
             type: "string",
             enum: TOOL_DEFINITIONS.report_project_operations.operations
           },
-          projectPath: { type: ["string", "null"] }
+          ...sharedRequestProperties
         },
         required: ["operation"],
         additionalProperties: true
@@ -128,7 +177,7 @@ export const TOOL_SCHEMAS = {
             type: "string",
             enum: TOOL_DEFINITIONS.report_page_operations.operations
           },
-          projectPath: { type: ["string", "null"] },
+          ...sharedRequestProperties,
           pageName: { type: ["string", "null"] },
           targetPageName: { type: ["string", "null"] },
           displayName: { type: ["string", "null"] },
@@ -162,7 +211,7 @@ export const TOOL_SCHEMAS = {
             type: "string",
             enum: TOOL_DEFINITIONS.report_visual_operations.operations
           },
-          projectPath: { type: ["string", "null"] },
+          ...sharedRequestProperties,
           pageName: { type: ["string", "null"] },
           targetPageName: { type: ["string", "null"] },
           visualName: { type: ["string", "null"] },
@@ -180,6 +229,119 @@ export const TOOL_SCHEMAS = {
           format: { type: ["object", "null"] },
           visibility: { type: ["boolean", "null"] },
           textValue: { type: ["string", "null"] }
+        },
+        required: ["operation"],
+        additionalProperties: true
+      }
+    },
+    required: ["request"],
+    additionalProperties: false
+  },
+  report_bookmark_operations: {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: TOOL_DEFINITIONS.report_bookmark_operations.operations
+          },
+          ...sharedRequestProperties,
+          bookmarkName: { type: ["string", "null"] },
+          displayName: { type: ["string", "null"] },
+          pageName: { type: ["string", "null"] },
+          groupName: { type: ["string", "null"] },
+          targetGroupName: { type: ["string", "null"] },
+          itemsOrder: { type: ["array", "null"], items: { type: "string" } },
+          bookmarkOrder: { type: ["array", "null"], items: { type: "string" } },
+          explorationState: { type: ["object", "null"] },
+          sections: { type: ["object", "null"] },
+          filters: { type: ["object", "null"] },
+          objects: { type: ["object", "null"] },
+          options: { type: ["object", "null"] }
+        },
+        required: ["operation"],
+        additionalProperties: true
+      }
+    },
+    required: ["request"],
+    additionalProperties: false
+  },
+  report_interaction_operations: {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: TOOL_DEFINITIONS.report_interaction_operations.operations
+          },
+          ...sharedRequestProperties,
+          pageName: { type: ["string", "null"] },
+          visualName: { type: ["string", "null"] },
+          controlName: { type: ["string", "null"] },
+          controlType: {
+            type: ["string", "null"],
+            enum: [...SUPPORTED_CONTROL_TYPES, null]
+          },
+          layout: { type: ["object", "null"] },
+          format: { type: ["object", "null"] },
+          action: { type: ["object", "null"] },
+          title: { type: ["string", "null"] },
+          fieldRefs: { type: ["array", "null"], items: { type: "string" } },
+          acceptsFilterContext: { type: ["string", "boolean", "null"] },
+          autoCreateBackButton: { type: ["boolean", "null"] },
+          hidden: { type: ["boolean", "null"] },
+          groupName: { type: ["string", "null"] },
+          syncFieldChanges: { type: ["boolean", "null"] },
+          syncFilterChanges: { type: ["boolean", "null"] },
+          bookmarkName: { type: ["string", "null"] },
+          drillthroughPageName: { type: ["string", "null"] },
+          deselectionBookmarkName: { type: ["string", "null"] },
+          orientation: { type: ["string", "null"] }
+        },
+        required: ["operation"],
+        additionalProperties: true
+      }
+    },
+    required: ["request"],
+    additionalProperties: false
+  },
+  report_field_parameter_operations: {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: TOOL_DEFINITIONS.report_field_parameter_operations.operations
+          },
+          ...sharedRequestProperties,
+          parameterName: { type: ["string", "null"] },
+          displayName: { type: ["string", "null"] },
+          pageName: { type: ["string", "null"] },
+          visualName: { type: ["string", "null"] },
+          role: { type: ["string", "null"] },
+          createSlicer: { type: ["boolean", "null"] },
+          slicerPageName: { type: ["string", "null"] },
+          slicerName: { type: ["string", "null"] },
+          layout: { type: ["object", "null"] },
+          fields: {
+            type: ["array", "null"],
+            items: {
+              type: "object",
+              properties: {
+                label: { type: "string" },
+                reference: { type: "string" },
+                order: { type: ["number", "integer", "null"] }
+              },
+              required: ["label", "reference"],
+              additionalProperties: true
+            }
+          }
         },
         required: ["operation"],
         additionalProperties: true

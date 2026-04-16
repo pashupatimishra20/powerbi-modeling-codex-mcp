@@ -105,6 +105,18 @@ export function visualFile(project, pageName, visualName) {
   return path.join(visualDir(project, pageName, visualName), "visual.json");
 }
 
+export function bookmarkRoot(project) {
+  return path.join(project.definitionRoot, "bookmarks");
+}
+
+export function bookmarksMetadataFile(project) {
+  return path.join(bookmarkRoot(project), "bookmarks.json");
+}
+
+export function bookmarkFile(project, bookmarkName) {
+  return path.join(bookmarkRoot(project), `${bookmarkName}.bookmark.json`);
+}
+
 function listSubdirectories(rootDir) {
   if (!fs.existsSync(rootDir)) {
     return [];
@@ -113,6 +125,17 @@ function listSubdirectories(rootDir) {
   return fs
     .readdirSync(rootDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+}
+
+function listFiles(rootDir, suffix) {
+  if (!fs.existsSync(rootDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(rootDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(suffix))
     .map((entry) => entry.name);
 }
 
@@ -125,6 +148,12 @@ export function listPageNames(project) {
 export function listVisualNames(project, pageName) {
   return listSubdirectories(pageVisualRoot(project, pageName)).filter((name) =>
     fs.existsSync(visualFile(project, pageName, name))
+  );
+}
+
+export function listBookmarkNames(project) {
+  return listFiles(bookmarkRoot(project), ".bookmark.json").map((fileName) =>
+    fileName.replace(/\.bookmark\.json$/i, "")
   );
 }
 
@@ -143,6 +172,22 @@ export function getPagesMetadata(project) {
 
 export function writePagesMetadata(project, pagesMetadata) {
   writeJson(pagesMetadataFile(project), pagesMetadata);
+}
+
+export function getBookmarksMetadata(project) {
+  const filePath = bookmarksMetadataFile(project);
+  if (!fs.existsSync(filePath)) {
+    return {
+      $schema: SCHEMA_URLS.bookmarks,
+      items: []
+    };
+  }
+
+  return readJson(filePath);
+}
+
+export function writeBookmarksMetadata(project, bookmarksMetadata) {
+  writeJson(bookmarksMetadataFile(project), bookmarksMetadata);
 }
 
 export function openProject(projectPath) {
@@ -166,8 +211,20 @@ export function openProject(projectPath) {
   };
 }
 
+export function refreshSemanticModel(project) {
+  project.semanticModel = project.semanticModelRoot
+    ? buildSemanticModelIndex(project.semanticModelRoot)
+    : { tables: new Map(), measures: new Map() };
+  return project.semanticModel;
+}
+
+function getBookmarkGroups(metadata) {
+  return metadata.items.filter((item) => Array.isArray(item.children));
+}
+
 export function getProjectSummary(project) {
   const pagesMetadata = getPagesMetadata(project);
+  const bookmarkMetadata = getBookmarksMetadata(project);
   const pages = listPageNames(project).map((pageName) => {
     const definition = readJson(pageFile(project, pageName));
     return {
@@ -186,6 +243,8 @@ export function getProjectSummary(project) {
     datasetReference: project.definitionPbir.datasetReference,
     activePageName: pagesMetadata.activePageName,
     pageCount: pages.length,
+    bookmarkCount: listBookmarkNames(project).length,
+    bookmarkGroupCount: getBookmarkGroups(bookmarkMetadata).length,
     pages,
     semanticModel: serializeSemanticModelIndex(project.semanticModel)
   };
@@ -196,7 +255,8 @@ function getProjectFilesForValidation(project) {
     definitionPbirFile(project),
     reportFile(project),
     versionFile(project),
-    pagesMetadataFile(project)
+    pagesMetadataFile(project),
+    bookmarksMetadataFile(project)
   ].filter((filePath) => fs.existsSync(filePath));
 
   for (const pageName of listPageNames(project)) {
@@ -204,6 +264,10 @@ function getProjectFilesForValidation(project) {
     for (const visualName of listVisualNames(project, pageName)) {
       files.push(visualFile(project, pageName, visualName));
     }
+  }
+
+  for (const bookmarkName of listBookmarkNames(project)) {
+    files.push(bookmarkFile(project, bookmarkName));
   }
 
   return files;
@@ -231,6 +295,23 @@ export function getPage(project, pageName) {
   const filePath = pageFile(project, pageName);
   ensureExists(fs.existsSync(filePath), `Page not found: ${pageName}`);
   return readJson(filePath);
+}
+
+function applyPageBackground(definition, background) {
+  definition.objects = definition.objects || {};
+  definition.objects.background = [
+    {
+      properties: {
+        color: {
+          expr: {
+            Literal: {
+              Value: `'${String(background.color || background).replace(/'/g, "''")}'`
+            }
+          }
+        }
+      }
+    }
+  ];
 }
 
 export async function createPage(project, request) {
@@ -267,25 +348,13 @@ export async function createPage(project, request) {
   }
 
   if (request.background) {
-    pageDefinition.objects = pageDefinition.objects || {};
-    pageDefinition.objects.background = [
-      {
-        properties: {
-          color: {
-            expr: {
-              Literal: {
-                Value: `'${String(request.background.color || request.background).replace(/'/g, "''")}'`
-              }
-            }
-          }
-        }
-      }
-    ];
+    applyPageBackground(pageDefinition, request.background);
   }
 
   if (request.tooltipTarget) {
     pageDefinition.pageBinding = {
-      name: request.tooltipTarget
+      name: request.tooltipTarget,
+      type: "Tooltip"
     };
   }
 
@@ -323,23 +392,13 @@ export async function updatePage(project, request) {
     definition.visibility = request.hidden ? "HiddenInViewMode" : "AlwaysVisible";
   }
   if (request.background) {
-    definition.objects = definition.objects || {};
-    definition.objects.background = [
-      {
-        properties: {
-          color: {
-            expr: {
-              Literal: {
-                Value: `'${String(request.background.color || request.background).replace(/'/g, "''")}'`
-              }
-            }
-          }
-        }
-      }
-    ];
+    applyPageBackground(definition, request.background);
   }
   if (request.tooltipTarget) {
-    definition.pageBinding = { name: request.tooltipTarget };
+    definition.pageBinding = {
+      name: request.tooltipTarget,
+      type: "Tooltip"
+    };
   }
 
   writeJson(pageFile(project, request.pageName), definition);

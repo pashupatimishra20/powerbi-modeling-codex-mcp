@@ -1,5 +1,31 @@
 import { SCHEMA_URLS } from "./constants.js";
 import {
+  createBookmark,
+  createBookmarkGroup,
+  deleteBookmark,
+  deleteBookmarkGroup,
+  getBookmark,
+  listBookmarks,
+  reorderBookmarks,
+  updateBookmark,
+  updateBookmarkGroup
+} from "./bookmark-service.js";
+import {
+  bindFieldParameterToVisual,
+  createFieldParameter,
+  createFieldParameterSlicer,
+  deleteFieldParameter,
+  listFieldParameters,
+  updateFieldParameter
+} from "./field-parameter-service.js";
+import {
+  clearDrillthroughPage,
+  configureDrillthroughPage,
+  createControl,
+  setSlicerSync,
+  updateControl
+} from "./interaction-service.js";
+import {
   createBlankProjectFixture,
   createPage,
   deletePage,
@@ -118,6 +144,97 @@ export async function handleVisualOperation(request) {
       return { success: true, operation: "SetFormatting", visual: await setVisualFormatting(project, request) };
     default:
       throw new Error(`Unsupported visual operation: ${request.operation}`);
+  }
+}
+
+export async function handleBookmarkOperation(request) {
+  const project = getProjectFromRequest(request);
+  switch (request.operation) {
+    case "List":
+      return { success: true, operation: "List", bookmarks: listBookmarks(project) };
+    case "Get":
+      return { success: true, operation: "Get", bookmark: getBookmark(project, request.bookmarkName) };
+    case "Create":
+      return { success: true, operation: "Create", bookmark: await createBookmark(project, request) };
+    case "Update":
+      return { success: true, operation: "Update", bookmark: await updateBookmark(project, request) };
+    case "Delete":
+      return { success: true, operation: "Delete", ...await deleteBookmark(project, request) };
+    case "Reorder":
+      return { success: true, operation: "Reorder", ...await reorderBookmarks(project, request) };
+    case "CreateGroup":
+      return { success: true, operation: "CreateGroup", group: await createBookmarkGroup(project, request) };
+    case "UpdateGroup":
+      return { success: true, operation: "UpdateGroup", group: await updateBookmarkGroup(project, request) };
+    case "DeleteGroup":
+      return { success: true, operation: "DeleteGroup", ...await deleteBookmarkGroup(project, request) };
+    default:
+      throw new Error(`Unsupported bookmark operation: ${request.operation}`);
+  }
+}
+
+export async function handleInteractionOperation(request) {
+  const project = getProjectFromRequest(request);
+  switch (request.operation) {
+    case "ConfigureDrillthroughPage":
+      return {
+        success: true,
+        operation: "ConfigureDrillthroughPage",
+        result: await configureDrillthroughPage(project, request)
+      };
+    case "ClearDrillthroughPage":
+      return {
+        success: true,
+        operation: "ClearDrillthroughPage",
+        page: await clearDrillthroughPage(project, request)
+      };
+    case "SetSlicerSync":
+      return {
+        success: true,
+        operation: "SetSlicerSync",
+        visual: await setSlicerSync(project, request)
+      };
+    case "CreateControl":
+      return {
+        success: true,
+        operation: "CreateControl",
+        control: await createControl(project, request)
+      };
+    case "UpdateControl":
+      return {
+        success: true,
+        operation: "UpdateControl",
+        control: await updateControl(project, request)
+      };
+    default:
+      throw new Error(`Unsupported interaction operation: ${request.operation}`);
+  }
+}
+
+export async function handleFieldParameterOperation(request) {
+  const project = getProjectFromRequest(request);
+  switch (request.operation) {
+    case "List":
+      return { success: true, operation: "List", fieldParameters: listFieldParameters(project) };
+    case "Create":
+      return { success: true, operation: "Create", fieldParameter: await createFieldParameter(project, request) };
+    case "Update":
+      return { success: true, operation: "Update", fieldParameter: await updateFieldParameter(project, request) };
+    case "Delete":
+      return { success: true, operation: "Delete", ...await deleteFieldParameter(project, request) };
+    case "BindVisual":
+      return { success: true, operation: "BindVisual", visual: await bindFieldParameterToVisual(project, request) };
+    case "CreateSlicerControl":
+      return {
+        success: true,
+        operation: "CreateSlicerControl",
+        visual: await createFieldParameterSlicer(project, {
+          ...request,
+          pageName: request.slicerPageName || request.pageName
+        })
+      };
+    default:
+      throw new Error(`Unsupported field parameter operation: ${request.operation}`);
   }
 }
 

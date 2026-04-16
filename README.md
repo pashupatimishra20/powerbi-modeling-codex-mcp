@@ -99,6 +99,9 @@ After install, restart Codex desktop so the plugin and bundled standalone skills
 - `USE powerbi-modeling-mcp open my PBIR project and create a new page called Executive Summary`
 - `USE powerbi-modeling-mcp create a clustered column chart on Executive Summary using Sales[Category] and [Total Sales]`
 - `USE powerbi-modeling-mcp rebind the line chart to Date[Month] and [Net Sales]`
+- `USE powerbi-modeling-mcp create a bookmark group and add bookmark buttons on the Overview page`
+- `USE powerbi-modeling-mcp configure a drillthrough page on Category and add a back button`
+- `USE powerbi-modeling-mcp create a field parameter for Category, Month, and Net Sales and wire it to a slicer`
 
 ## Regenerate operations catalog
 
@@ -140,8 +143,11 @@ The local report-authoring MCP adds these tool families:
 - `report_project_operations`: `OpenProject`, `GetProject`, `ValidateProject`, `ListSchemas`
 - `report_page_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `Duplicate`
 - `report_visual_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Duplicate`, `Move`, `BindFields`, `SetFormatting`
+- `report_bookmark_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`
+- `report_interaction_operations`: `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `SetSlicerSync`, `CreateControl`, `UpdateControl`
+- `report_field_parameter_operations`: `List`, `Create`, `Update`, `Delete`, `BindVisual`, `CreateSlicerControl`
 
-Phase 1 visual support includes:
+Phase 2 interactive authoring now supports:
 
 - `card`
 - `multiRowCard`
@@ -153,3 +159,8 @@ Phase 1 visual support includes:
 - `pieChart`
 - `slicer`
 - `textbox`
+- true report bookmarks and bookmark groups
+- drillthrough page binding and drillthrough buttons
+- slicer sync groups
+- back, bookmark, and drillthrough buttons plus generated bookmark navigators
+- field-parameter orchestration through the official modeling MCP with local PBIR wiring
