@@ -2,6 +2,8 @@ param(
     [string]$PluginParent = "$HOME\plugins",
     [string]$MarketplacePath = "$HOME\.agents\plugins\marketplace.json",
     [string]$SkillParent = $(if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME 'skills' } else { Join-Path (Join-Path $HOME '.codex') 'skills' }),
+    [ValidateSet('Full', 'PBIROnly')]
+    [string]$Mode = 'Full',
     [switch]$Force
 )
 
@@ -63,6 +65,23 @@ if (Test-Path -LiteralPath $packageJsonPath) {
     }
 }
 
+$mcpConfigWriter = Join-Path $workingPluginPath 'scripts\write-mcp-config.mjs'
+if (-not (Test-Path -LiteralPath $mcpConfigWriter)) {
+    throw "MCP config writer not found at $mcpConfigWriter"
+}
+
+Write-Host "Writing MCP configuration mode '$Mode' in: $workingPluginPath"
+Push-Location $workingPluginPath
+try {
+    & node $mcpConfigWriter --mode $Mode --out .mcp.json
+    if ($LASTEXITCODE -ne 0) {
+        throw "write-mcp-config.mjs failed with exit code $LASTEXITCODE"
+    }
+}
+finally {
+    Pop-Location
+}
+
 $installedSkillPaths = Install-BundledSkills -SourceSkillsRoot $sourceSkillsRoot -DestinationSkillParent $SkillParent
 
 $marketplace = Read-Marketplace -MarketplacePath $MarketplacePath
@@ -74,4 +93,5 @@ Write-Host "Installed bundled standalone skills:"
 $installedSkillPaths | ForEach-Object { Write-Host " - $_" }
 Write-Host "Updated marketplace: $MarketplacePath"
 Write-Host "Marketplace source path: $marketplaceSourcePath"
+Write-Host "Install mode: $Mode"
 Write-Host 'Restart Codex desktop to load the plugin and bundled standalone skills into session context.'

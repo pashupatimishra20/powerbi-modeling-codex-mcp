@@ -79,6 +79,11 @@ export const SUPPORTED_VISUAL_TYPES = [
   "lineChart",
   "areaChart",
   "lineAndClusteredColumnChart",
+  "scatterChart",
+  "treemap",
+  "funnelChart",
+  "gauge",
+  "kpi",
   "pieChart",
   "donutChart",
   "slicer",
@@ -102,20 +107,21 @@ export const SUPPORTED_CONTROL_TYPES = [
 export const TOOL_DEFINITIONS = {
   report_project_operations: {
     description:
-      "Perform operations on PBIR/PBIP report projects. Supported operations: OpenProject, GetProject, ValidateProject, ListSchemas.",
-    operations: ["OpenProject", "GetProject", "ValidateProject", "ListSchemas"]
+      "Perform operations on PBIR/PBIP report projects. Supported operations: OpenProject, GetProject, GetProjectContext, SearchBindableFields, ValidateProject, ListSchemas.",
+    operations: ["OpenProject", "GetProject", "GetProjectContext", "SearchBindableFields", "ValidateProject", "ListSchemas"]
   },
   report_page_operations: {
     description:
-      "Perform operations on PBIR report pages. Supported operations: List, Get, Create, Update, Delete, Reorder, Duplicate.",
-    operations: ["List", "Get", "Create", "Update", "Delete", "Reorder", "Duplicate"]
+      "Perform operations on PBIR report pages. Supported operations: List, Get, GetPageContext, Create, Update, Delete, Reorder, Duplicate.",
+    operations: ["List", "Get", "GetPageContext", "Create", "Update", "Delete", "Reorder", "Duplicate"]
   },
   report_visual_operations: {
     description:
-      "Perform operations on PBIR report visuals. Supported operations: List, Get, Create, Update, Delete, Duplicate, Move, BindFields, SetFormatting.",
+      "Perform operations on PBIR report visuals. Supported operations: List, Get, ListSupportedVisuals, Create, Update, Delete, Duplicate, Move, BindFields, SetFormatting.",
     operations: [
       "List",
       "Get",
+      "ListSupportedVisuals",
       "Create",
       "Update",
       "Delete",
@@ -142,8 +148,9 @@ export const TOOL_DEFINITIONS = {
   },
   report_interaction_operations: {
     description:
-      "Configure PBIR drillthrough, tooltips, visual interactions, slicer sync, and interactive controls. Supported operations: ConfigureDrillthroughPage, ClearDrillthroughPage, ConfigureCrossReportDrillthroughPage, ClearCrossReportDrillthroughPage, ConfigureTooltipPage, ClearTooltipPage, AssignTooltip, SetVisualInteractions, SetSlicerSync, CreatePageNavigationButton, CreatePageNavigator, CreateSlicerActionButton, CreateWebUrlButton, CreateQnaButton, CreateControl, UpdateControl.",
+      "Configure PBIR drillthrough, tooltips, visual interactions, slicer sync, and interactive controls. Supported operations: ListSupportedControls, ConfigureDrillthroughPage, ClearDrillthroughPage, ConfigureCrossReportDrillthroughPage, ClearCrossReportDrillthroughPage, ConfigureTooltipPage, ClearTooltipPage, AssignTooltip, SetVisualInteractions, SetSlicerSync, CreatePageNavigationButton, CreatePageNavigator, CreateSlicerActionButton, CreateWebUrlButton, CreateQnaButton, CreateControl, UpdateControl.",
     operations: [
+      "ListSupportedControls",
       "ConfigureDrillthroughPage",
       "ClearDrillthroughPage",
       "ConfigureCrossReportDrillthroughPage",
@@ -190,6 +197,18 @@ export const TOOL_DEFINITIONS = {
       "Distribute",
       "ResizeToFit"
     ]
+  },
+  report_template_operations: {
+    description:
+      "Create higher-level PBIR report scaffolds and page-wide styling. Supported operations: ListTemplates, CreatePageFromTemplate, ApplyVisualStylePreset, CreateKpiStrip, CreateFilterBar, CreateTooltipLayout.",
+    operations: [
+      "ListTemplates",
+      "CreatePageFromTemplate",
+      "ApplyVisualStylePreset",
+      "CreateKpiStrip",
+      "CreateFilterBar",
+      "CreateTooltipLayout"
+    ]
   }
 };
 
@@ -209,6 +228,9 @@ export const TOOL_SCHEMAS = {
             enum: TOOL_DEFINITIONS.report_project_operations.operations
           },
           ...sharedRequestProperties
+          ,
+          search: { type: ["string", "null"] },
+          limit: { type: ["number", "integer", "null"] }
         },
         required: ["operation"],
         additionalProperties: true
@@ -278,7 +300,9 @@ export const TOOL_SCHEMAS = {
           sort: { type: ["object", "null"] },
           format: { type: ["object", "null"] },
           visibility: { type: ["boolean", "null"] },
-          textValue: { type: ["string", "null"] }
+          textValue: { type: ["string", "null"] },
+          search: { type: ["string", "null"] },
+          limit: { type: ["number", "integer", "null"] }
         },
         required: ["operation"],
         additionalProperties: true
@@ -477,6 +501,51 @@ export const TOOL_SCHEMAS = {
           alignment: { type: ["string", "null"] },
           distribution: { type: ["string", "null"] },
           layerAction: { type: ["string", "null"] }
+        },
+        required: ["operation"],
+        additionalProperties: true
+      }
+    },
+    required: ["request"],
+    additionalProperties: false
+  },
+  report_template_operations: {
+    type: "object",
+    properties: {
+      request: {
+        type: "object",
+        properties: {
+          operation: {
+            type: "string",
+            enum: TOOL_DEFINITIONS.report_template_operations.operations
+          },
+          ...sharedRequestProperties,
+          templateName: { type: ["string", "null"] },
+          presetName: { type: ["string", "null"] },
+          pageName: { type: ["string", "null"] },
+          displayName: { type: ["string", "null"] },
+          title: { type: ["string", "null"] },
+          categoryField: { type: ["string", "null"] },
+          trendField: { type: ["string", "null"] },
+          targetField: { type: ["string", "null"] },
+          fields: { type: ["array", "null"], items: { type: "string" } },
+          fieldRefs: { type: ["array", "null"], items: { type: "string" } },
+          measures: { type: ["array", "null"], items: { type: "string" } },
+          items: {
+            type: ["array", "null"],
+            items: {
+              type: "object",
+              properties: {
+                title: { type: ["string", "null"] },
+                measureRef: { type: ["string", "null"] }
+              },
+              additionalProperties: true
+            }
+          },
+          visualNames: { type: ["array", "null"], items: { type: "string" } },
+          includeApplyAllSlicers: { type: ["boolean", "null"] },
+          includeClearAllSlicers: { type: ["boolean", "null"] },
+          layout: { type: ["object", "null"] }
         },
         required: ["operation"],
         additionalProperties: true

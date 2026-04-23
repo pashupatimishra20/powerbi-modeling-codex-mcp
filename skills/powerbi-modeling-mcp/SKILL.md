@@ -50,12 +50,13 @@ node scripts/pbi_mcp_client.cjs call connection_operations "{\"request\":{\"oper
 5. For report authoring, open a PBIR/PBIP project and use the report tools:
 
 ```text
-report_project_operations -> OpenProject
-report_page_operations -> Create
-report_visual_operations -> Create / BindFields / SetFormatting
+report_project_operations -> OpenProject / GetProjectContext / SearchBindableFields
+report_page_operations -> Create / GetPageContext
+report_visual_operations -> ListSupportedVisuals / Create / BindFields / SetFormatting
 report_bookmark_operations -> Create / Update / Reorder / CreateGroup
-report_interaction_operations -> ConfigureDrillthroughPage / SetSlicerSync / CreateControl
+report_interaction_operations -> ListSupportedControls / ConfigureDrillthroughPage / SetSlicerSync / CreateControl
 report_field_parameter_operations -> Create / BindVisual / CreateSlicerControl
+report_template_operations -> ListTemplates / CreatePageFromTemplate / ApplyVisualStylePreset
 ```
 
 ## Core Workflow
@@ -82,11 +83,13 @@ node scripts/pbi_mcp_client.cjs help measure_operations
   - `report_bookmark_operations` for bookmarks and bookmark groups
   - `report_interaction_operations` for drillthrough, slicer sync, and interactive controls
   - `report_field_parameter_operations` for field-parameter orchestration across model + report
+  - `report_template_operations` for higher-level page scaffolds, KPI strips, filter bars, tooltip layouts, and page-wide style presets
 
 4. Validate:
 - Read back using `GET`/`LIST` operations.
 - For DAX, use `dax_query_operations` with `Validate` before `Execute`.
 - For PBIR projects, always run `report_project_operations` `ValidateProject` after writes.
+- Review the returned `changes` payload after mutating report operations to confirm touched files and entity-level impact.
 
 ## Safety Rules
 

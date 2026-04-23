@@ -82,6 +82,13 @@ import {
   resolveFieldReference
 } from "../src/report-authoring/semantic-model.js";
 import {
+  handleTemplateOperation,
+  handleInteractionOperation,
+  handlePageOperation,
+  handleProjectOperation,
+  handleVisualOperation
+} from "../src/report-authoring/tool-handlers.js";
+import {
   bindVisualFields,
   createVisual,
   deleteVisual,
@@ -947,4 +954,340 @@ test("rejects non-PBIR inputs and invalid bindings", async () => {
       }),
     /single bound field/
   );
+});
+
+test("exposes low-noise project and page context operations", async () => {
+  const { reportRoot } = copyFixtureProject("InteractiveReport.Report");
+
+  const opened = await handleProjectOperation({
+    operation: "OpenProject",
+    projectPath: reportRoot
+  });
+  assert.equal(opened.success, true);
+
+  const projectContext = await handleProjectOperation({
+    operation: "GetProjectContext"
+  });
+  assert.equal(projectContext.success, true);
+  assert.equal(projectContext.operation, "GetProjectContext");
+  assert.equal(projectContext.context.pageCount, 4);
+  assert.equal(projectContext.context.pages.length, 4);
+  assert.ok(projectContext.context.pages.every((page) => "visualCount" in page));
+  assert.ok(projectContext.context.pages.every((page) => !("width" in page)));
+  assert.ok(projectContext.context.semanticModel.tables.length >= 2);
+
+  const pageContext = await handlePageOperation({
+    operation: "GetPageContext",
+    pageName: "ReportSection"
+  });
+  assert.equal(pageContext.success, true);
+  assert.equal(pageContext.operation, "GetPageContext");
+  assert.equal(pageContext.context.page.name, "ReportSection");
+  assert.ok(Array.isArray(pageContext.context.visuals));
+  assert.ok(pageContext.context.visuals.length >= 1);
+  assert.ok(pageContext.context.visuals.every((visual) => "visualType" in visual));
+  assert.ok(pageContext.context.visuals.every((visual) => !("query" in visual)));
+
+  const bindableFields = await handleProjectOperation({
+    operation: "SearchBindableFields",
+    search: "sales"
+  });
+  assert.equal(bindableFields.success, true);
+  assert.equal(bindableFields.operation, "SearchBindableFields");
+  assert.ok(bindableFields.fields.some((field) => field.reference === "Sales[Amount]"));
+  assert.ok(bindableFields.fields.some((field) => field.reference === "[Total Sales]"));
+});
+
+test("lists supported visuals and controls without opening a project", async () => {
+  const visuals = await handleVisualOperation({
+    operation: "ListSupportedVisuals"
+  });
+  assert.equal(visuals.success, true);
+  assert.equal(visuals.operation, "ListSupportedVisuals");
+  assert.ok(visuals.visualTypes.includes("scatterChart"));
+  assert.ok(visuals.visualTypes.includes("kpi"));
+
+  const controls = await handleInteractionOperation({
+    operation: "ListSupportedControls"
+  });
+  assert.equal(controls.success, true);
+  assert.equal(controls.operation, "ListSupportedControls");
+  assert.ok(controls.controlTypes.includes("pageNavigator"));
+  assert.ok(controls.controlTypes.includes("qnaButton"));
+});
+
+test("adds standardized change summaries to mutating handler responses", async () => {
+  const { reportRoot } = copyFixtureProject();
+
+  await handleProjectOperation({
+    operation: "OpenProject",
+    projectPath: reportRoot
+  });
+
+  const createdPage = await handlePageOperation({
+    operation: "Create",
+    pageName: "ExecutiveSummary",
+    displayName: "Executive Summary"
+  });
+  assert.equal(createdPage.success, true);
+  assert.equal(createdPage.page.name, "ExecutiveSummary");
+  assert.deepEqual(createdPage.changes.created.pages, ["ExecutiveSummary"]);
+  assert.ok(createdPage.changes.files.some((file) => file.endsWith(path.join("ExecutiveSummary", "page.json"))));
+  assert.ok(createdPage.changes.files.some((file) => file.endsWith(path.join("pages", "pages.json"))));
+  assert.deepEqual(createdPage.changes.warnings, []);
+
+  const createdVisual = await handleVisualOperation({
+    operation: "Create",
+    pageName: "ExecutiveSummary",
+    visualType: "card",
+    name: "TotalSalesCard",
+    bindings: {
+      values: ["[Total Sales]"]
+    }
+  });
+  assert.equal(createdVisual.success, true);
+  assert.equal(createdVisual.visual.visual.visualType, "card");
+  assert.deepEqual(createdVisual.changes.created.visuals, ["TotalSalesCard"]);
+  assert.ok(createdVisual.changes.files.some((file) => file.endsWith(path.join("TotalSalesCard", "visual.json"))));
+});
+
+test("lists and applies report templates while keeping generated pages editable", async () => {
+  const { reportRoot } = copyFixtureProject();
+
+  const templates = await handleTemplateOperation({
+    operation: "ListTemplates"
+  });
+  assert.equal(templates.success, true);
+  assert.ok(templates.templates.some((template) => template.name === "ExecutiveSummary"));
+  assert.ok(templates.templates.some((template) => template.name === "TooltipMini"));
+
+  await handleProjectOperation({
+    operation: "OpenProject",
+    projectPath: reportRoot
+  });
+
+  const generated = await handleTemplateOperation({
+    operation: "CreatePageFromTemplate",
+    templateName: "ExecutiveSummary",
+    pageName: "ExecutiveSummary",
+    displayName: "Executive Summary",
+    categoryField: "Sales[Category]",
+    trendField: "Date[Month]",
+    measures: ["[Total Sales]", "[Net Sales]"]
+  });
+  assert.equal(generated.success, true);
+  assert.equal(generated.page.name, "ExecutiveSummary");
+  assert.ok(generated.visuals.length >= 4);
+  assert.deepEqual(generated.changes.created.pages, ["ExecutiveSummary"]);
+
+  const reopened = openProject(reportRoot);
+  const updated = await updateVisual(reopened, {
+    pageName: "ExecutiveSummary",
+    visualName: generated.visuals[0].name,
+    title: "Updated Executive Visual"
+  });
+  assert.equal(
+    updated.visual.visualContainerObjects.title[0].properties.text.expr.Literal.Value,
+    "'Updated Executive Visual'"
+  );
+
+  const validation = await validateProject(reopened);
+  assert.equal(validation.valid, true);
+});
+
+test("creates dedicated KPI strip, filter bar, and tooltip layouts from template operations", async () => {
+  const { reportRoot } = copyFixtureProject();
+
+  await handleProjectOperation({
+    operation: "OpenProject",
+    projectPath: reportRoot
+  });
+
+  const kpiStrip = await handleTemplateOperation({
+    operation: "CreateKpiStrip",
+    pageName: "ReportSection",
+    items: [
+      { title: "Total Sales", measureRef: "[Total Sales]" },
+      { title: "Net Sales", measureRef: "[Net Sales]" },
+      { title: "Sales Amount", measureRef: "Sales[Amount]" }
+    ]
+  });
+  assert.equal(kpiStrip.success, true);
+  assert.equal(kpiStrip.visuals.length, 3);
+  assert.ok(kpiStrip.visuals.every((visual) => visual.visual.visualType === "kpi"));
+
+  const filterBar = await handleTemplateOperation({
+    operation: "CreateFilterBar",
+    pageName: "ReportSection",
+    fields: ["Sales[Category]", "Date[Month]"],
+    includeClearAllSlicers: true
+  });
+  assert.equal(filterBar.success, true);
+  assert.ok(filterBar.visuals.some((visual) => visual.visual.visualType === "slicer"));
+  assert.ok(filterBar.controls.some((control) => control.name.includes("Clear")));
+
+  const tooltipLayout = await handleTemplateOperation({
+    operation: "CreateTooltipLayout",
+    pageName: "GeneratedTooltip",
+    displayName: "Generated Tooltip",
+    fieldRefs: ["Sales[Category]"]
+  });
+  assert.equal(tooltipLayout.success, true);
+  assert.equal(getPage(openProject(reportRoot), "GeneratedTooltip").pageBinding.type, "Tooltip");
+  assert.ok(tooltipLayout.visuals.length >= 1);
+});
+
+test("supports new visual types and richer formatting properties", async () => {
+  const { reportRoot } = copyFixtureProject();
+  const project = openProject(reportRoot);
+
+  await createPage(project, {
+    pageName: "VisualLab",
+    displayName: "Visual Lab"
+  });
+
+  const visualSpecs = [
+    {
+      visualType: "scatterChart",
+      name: "ScatterLab",
+      bindings: {
+        x: ["Sales[Amount]"],
+        y: ["[Total Sales]"],
+        size: ["[Net Sales]"]
+      }
+    },
+    {
+      visualType: "treemap",
+      name: "TreeLab",
+      bindings: {
+        category: ["Sales[Category]"],
+        values: ["[Total Sales]"]
+      }
+    },
+    {
+      visualType: "funnelChart",
+      name: "FunnelLab",
+      bindings: {
+        category: ["Sales[Category]"],
+        values: ["Sales[Amount]"]
+      }
+    },
+    {
+      visualType: "gauge",
+      name: "GaugeLab",
+      bindings: {
+        values: ["[Total Sales]"],
+        target: ["[Net Sales]"]
+      }
+    },
+    {
+      visualType: "kpi",
+      name: "KpiLab",
+      bindings: {
+        values: ["[Total Sales]"],
+        trendAxis: ["Date[Month]"],
+        target: ["[Net Sales]"]
+      }
+    }
+  ];
+
+  const created = [];
+  for (const spec of visualSpecs) {
+    created.push(
+      await createVisual(project, {
+        pageName: "VisualLab",
+        ...spec
+      })
+    );
+  }
+
+  assert.deepEqual(
+    created.map((visual) => visual.visual.visualType),
+    ["scatterChart", "treemap", "funnelChart", "gauge", "kpi"]
+  );
+
+  const formatted = await updateVisual(project, {
+    pageName: "VisualLab",
+    visualName: "ScatterLab",
+    format: {
+      title: "Scatter Styled",
+      fontFamily: "Segoe UI",
+      fontColor: "#112233",
+      displayUnits: "Thousands",
+      decimalPlaces: 1,
+      legendPosition: "Top",
+      axisTitles: {
+        category: "Amount",
+        value: "Sales"
+      },
+      backgroundTransparency: 20
+    }
+  });
+  assert.equal(
+    getAnnotationValue(formatted, "codex.format.fontFamily"),
+    "Segoe UI"
+  );
+  assert.equal(getAnnotationValue(formatted, "codex.format.fontColor"), "#112233");
+  assert.equal(formatted.visual.objects.legend[0].properties.position.expr.Literal.Value, "'Top'");
+  assert.equal(
+    formatted.visual.objects.categoryAxis[0].properties.titleText.expr.Literal.Value,
+    "'Amount'"
+  );
+  assert.equal(
+    formatted.visual.objects.background[0].properties.transparency.expr.Literal.Value,
+    "20"
+  );
+});
+
+test("applies a visual style preset across a page without breaking validation", async () => {
+  const { reportRoot } = copyFixtureProject();
+  const project = openProject(reportRoot);
+
+  await createPage(project, {
+    pageName: "StyledPage",
+    displayName: "Styled Page"
+  });
+  await createVisual(project, {
+    pageName: "StyledPage",
+    name: "SalesChart",
+    visualType: "clusteredColumnChart",
+    bindings: {
+      category: ["Sales[Category]"],
+      values: ["[Total Sales]"]
+    }
+  });
+  await createVisual(project, {
+    pageName: "StyledPage",
+    name: "SalesCard",
+    visualType: "card",
+    bindings: {
+      values: ["[Net Sales]"]
+    }
+  });
+
+  await handleProjectOperation({
+    operation: "OpenProject",
+    projectPath: reportRoot
+  });
+
+  const preset = await handleTemplateOperation({
+    operation: "ApplyVisualStylePreset",
+    pageName: "StyledPage",
+    presetName: "ExecutiveWarm"
+  });
+  assert.equal(preset.success, true);
+  assert.equal(preset.updatedVisuals.length, 2);
+
+  const chart = getVisual(openProject(reportRoot), "StyledPage", "SalesChart");
+  assert.equal(
+    getAnnotationValue(chart, "codex.format.fontFamily"),
+    "Georgia"
+  );
+  assert.equal(
+    chart.visual.visualContainerObjects.title[0].properties.text.expr.Literal.Value,
+    "'ExecutiveWarm - SalesChart'"
+  );
+
+  const validation = await validateProject(openProject(reportRoot));
+  assert.equal(validation.valid, true);
 });

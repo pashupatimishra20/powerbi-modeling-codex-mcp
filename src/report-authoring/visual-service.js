@@ -9,7 +9,8 @@ import {
   ensureArrayObject,
   getAnnotation,
   numberLiteral,
-  quoteLiteral
+  quoteLiteral,
+  setAnnotation
 } from "./format-utils.js";
 import {
   buildFieldExpression,
@@ -124,6 +125,38 @@ export function applyFormatting(visualDefinition, format = {}) {
     const titleProps = ensureArrayObject(visualDefinition.visual.visualContainerObjects, "title");
     titleProps.fontSize = numberLiteral(format.fontSize);
   }
+  if (format.fontFamily) {
+    setAnnotation(visualDefinition, "codex.format.fontFamily", format.fontFamily);
+  }
+  if (format.fontColor) {
+    setAnnotation(visualDefinition, "codex.format.fontColor", format.fontColor);
+    const labelProps = ensureArrayObject(visualDefinition.visual.objects, "labels");
+    labelProps.color = quoteLiteral(format.fontColor);
+  }
+  if (format.displayUnits != null) {
+    const labelProps = ensureArrayObject(visualDefinition.visual.objects, "labels");
+    labelProps.labelDisplayUnits = quoteLiteral(format.displayUnits);
+  }
+  if (format.decimalPlaces != null) {
+    const labelProps = ensureArrayObject(visualDefinition.visual.objects, "labels");
+    labelProps.labelPrecision = numberLiteral(format.decimalPlaces);
+  }
+  if (format.legendPosition) {
+    const legendProps = ensureArrayObject(visualDefinition.visual.objects, "legend");
+    legendProps.position = quoteLiteral(format.legendPosition);
+  }
+  if (format.axisTitles?.category) {
+    const categoryAxisProps = ensureArrayObject(visualDefinition.visual.objects, "categoryAxis");
+    categoryAxisProps.titleText = quoteLiteral(format.axisTitles.category);
+  }
+  if (format.axisTitles?.value) {
+    const valueAxisProps = ensureArrayObject(visualDefinition.visual.objects, "valueAxis");
+    valueAxisProps.titleText = quoteLiteral(format.axisTitles.value);
+  }
+  if (format.backgroundTransparency != null) {
+    const backgroundProps = ensureArrayObject(visualDefinition.visual.objects, "background");
+    backgroundProps.transparency = numberLiteral(format.backgroundTransparency);
+  }
 }
 
 function getDefaultRoleBindings(visualType) {
@@ -148,10 +181,30 @@ function getDefaultRoleBindings(visualType) {
     case "lineChart":
     case "areaChart":
     case "lineAndClusteredColumnChart":
+    case "treemap":
+    case "funnelChart":
       return {
         Category: ["category", "categories", "legend", "x"],
         Y: ["values", "value", "y", "columnValues"],
         Y2: ["lineValues", "secondaryValues", "lineY"]
+      };
+    case "scatterChart":
+      return {
+        X: ["x", "category"],
+        Y: ["y", "values", "value"],
+        Size: ["size"],
+        Category: ["details", "legend"]
+      };
+    case "gauge":
+      return {
+        Values: ["values", "value", "indicator"],
+        Target: ["target", "goal"]
+      };
+    case "kpi":
+      return {
+        Values: ["values", "value", "indicator"],
+        TrendAxis: ["trendAxis", "trend", "category"],
+        Target: ["target", "goal"]
       };
     default:
       return {
@@ -258,7 +311,11 @@ function buildQueryState(visualType, bindings, semanticModel) {
 function createDefaultSort(bindings, visualType, semanticModel) {
   const normalizedBindings = normalizeBindingsForVisual(visualType, bindings);
   const firstRole =
-    normalizedBindings.Y?.[0] ?? normalizedBindings.Values?.[0] ?? normalizedBindings.Category?.[0];
+    normalizedBindings.Y?.[0] ??
+    normalizedBindings.Values?.[0] ??
+    normalizedBindings.X?.[0] ??
+    normalizedBindings.TrendAxis?.[0] ??
+    normalizedBindings.Category?.[0];
   if (!firstRole || typeof firstRole !== "string") {
     return undefined;
   }

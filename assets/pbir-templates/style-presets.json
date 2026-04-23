@@ -1,0 +1,14 @@
+{
+  "presets": [
+    {
+      "name": "ExecutiveWarm",
+      "description": "Warm executive styling with serif titles and restrained chart chrome.",
+      "format": {
+        "fontFamily": "Georgia",
+        "fontColor": "#4A3F35",
+        "legendPosition": "Top",
+        "backgroundTransparency": 8
+      }
+    }
+  ]
+}

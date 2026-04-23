@@ -131,6 +131,53 @@ export function serializeSemanticModelIndex(index) {
   };
 }
 
+export function searchBindableFields(semanticModel, search = "", limit = 25) {
+  const normalizedSearch = String(search || "").trim().toLowerCase();
+  const maxResults = Math.max(1, Number(limit) || 25);
+  const results = [];
+
+  for (const [tableName, table] of semanticModel.tables.entries()) {
+    for (const columnName of table.columns) {
+      results.push({
+        kind: "column",
+        tableName,
+        name: columnName,
+        reference: `${tableName}[${columnName}]`
+      });
+    }
+
+    for (const measureName of table.measures) {
+      results.push({
+        kind: "measure",
+        tableName,
+        name: measureName,
+        reference: `[${measureName}]`
+      });
+    }
+
+    for (const [hierarchyName, levels] of table.hierarchies.entries()) {
+      for (const levelName of levels) {
+        results.push({
+          kind: "hierarchyLevel",
+          tableName,
+          name: `${hierarchyName}.${levelName}`,
+          reference: `${tableName}[${hierarchyName}].[${levelName}]`
+        });
+      }
+    }
+  }
+
+  const filtered = normalizedSearch
+    ? results.filter((item) =>
+        `${item.reference} ${item.name} ${item.tableName}`.toLowerCase().includes(normalizedSearch)
+      )
+    : results;
+
+  return filtered
+    .sort((left, right) => left.reference.localeCompare(right.reference))
+    .slice(0, maxResults);
+}
+
 export function resolveFieldReference(ref, semanticModel) {
   const trimmed = String(ref || "").trim();
 

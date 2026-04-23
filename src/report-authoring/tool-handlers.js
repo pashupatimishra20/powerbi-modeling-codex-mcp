@@ -1,4 +1,14 @@
-import { SCHEMA_URLS } from "./constants.js";
+import {
+  SCHEMA_URLS,
+  SUPPORTED_CONTROL_TYPES,
+  SUPPORTED_VISUAL_TYPES
+} from "./constants.js";
+import {
+  buildEntityChanges,
+  diffProjectFiles,
+  snapshotProjectFiles,
+  withChangeSummary
+} from "./change-summary.js";
 import {
   addToGroup,
   align,
@@ -56,15 +66,26 @@ import {
   updateMobileVisual
 } from "./mobile-layout-service.js";
 import {
+  applyVisualStylePreset,
+  createFilterBar,
+  createKpiStrip,
+  createPageFromTemplate,
+  createTooltipLayout,
+  listTemplates
+} from "./template-service.js";
+import {
   createBlankProjectFixture,
   createPage,
   deletePage,
   duplicatePage,
+  getPageContext,
   getPage,
+  getProjectContext,
   getProjectSummary,
   listPages,
   openProject,
   reorderPages,
+  searchBindableFields,
   updatePage,
   validateProject
 } from "./project-service.js";
@@ -91,6 +112,15 @@ function getProjectFromRequest(request) {
   return openProject(projectPath);
 }
 
+async function runWithChanges(request, kind, operation, execute) {
+  const project = getProjectFromRequest(request);
+  const before = snapshotProjectFiles(project.root);
+  const result = await execute(project);
+  const files = diffProjectFiles(project.root, before);
+  const entityChanges = buildEntityChanges(kind, operation, request, result);
+  return withChangeSummary(result, files, entityChanges);
+}
+
 export async function handleProjectOperation(request) {
   switch (request.operation) {
     case "OpenProject": {
@@ -108,6 +138,22 @@ export async function handleProjectOperation(request) {
         success: true,
         operation: "GetProject",
         project: getProjectSummary(project)
+      };
+    }
+    case "GetProjectContext": {
+      const project = getProjectFromRequest(request);
+      return {
+        success: true,
+        operation: "GetProjectContext",
+        context: getProjectContext(project)
+      };
+    }
+    case "SearchBindableFields": {
+      const project = getProjectFromRequest(request);
+      return {
+        success: true,
+        operation: "SearchBindableFields",
+        fields: searchBindableFields(project, request.search, request.limit)
       };
     }
     case "ValidateProject": {
@@ -136,22 +182,57 @@ export async function handlePageOperation(request) {
       return { success: true, operation: "List", pages: listPages(project) };
     case "Get":
       return { success: true, operation: "Get", page: getPage(project, request.pageName) };
+    case "GetPageContext":
+      return {
+        success: true,
+        operation: "GetPageContext",
+        context: getPageContext(project, request.pageName)
+      };
     case "Create":
-      return { success: true, operation: "Create", page: await createPage(project, request) };
+      return runWithChanges(request, "page", "Create", async () => ({
+        success: true,
+        operation: "Create",
+        page: await createPage(project, request)
+      }));
     case "Update":
-      return { success: true, operation: "Update", page: await updatePage(project, request) };
+      return runWithChanges(request, "page", "Update", async () => ({
+        success: true,
+        operation: "Update",
+        page: await updatePage(project, request)
+      }));
     case "Delete":
-      return { success: true, operation: "Delete", ...await deletePage(project, request) };
+      return runWithChanges(request, "page", "Delete", async () => ({
+        success: true,
+        operation: "Delete",
+        ...await deletePage(project, request)
+      }));
     case "Reorder":
-      return { success: true, operation: "Reorder", ...await reorderPages(project, request) };
+      return runWithChanges(request, "page", "Reorder", async () => ({
+        success: true,
+        operation: "Reorder",
+        ...await reorderPages(project, request)
+      }));
     case "Duplicate":
-      return { success: true, operation: "Duplicate", page: await duplicatePage(project, request) };
+      return runWithChanges(request, "page", "Duplicate", async () => ({
+        success: true,
+        operation: "Duplicate",
+        page: await duplicatePage(project, request)
+      }));
     default:
       throw new Error(`Unsupported page operation: ${request.operation}`);
   }
 }
 
 export async function handleVisualOperation(request) {
+  switch (request.operation) {
+    case "ListSupportedVisuals":
+      return {
+        success: true,
+        operation: "ListSupportedVisuals",
+        visualTypes: SUPPORTED_VISUAL_TYPES
+      };
+  }
+
   const project = getProjectFromRequest(request);
   switch (request.operation) {
     case "List":
@@ -159,19 +240,47 @@ export async function handleVisualOperation(request) {
     case "Get":
       return { success: true, operation: "Get", visual: getVisual(project, request.pageName, request.visualName) };
     case "Create":
-      return { success: true, operation: "Create", visual: await createVisual(project, request) };
+      return runWithChanges(request, "visual", "Create", async () => ({
+        success: true,
+        operation: "Create",
+        visual: await createVisual(project, request)
+      }));
     case "Update":
-      return { success: true, operation: "Update", visual: await updateVisual(project, request) };
+      return runWithChanges(request, "visual", "Update", async () => ({
+        success: true,
+        operation: "Update",
+        visual: await updateVisual(project, request)
+      }));
     case "Delete":
-      return { success: true, operation: "Delete", ...await deleteVisual(project, request) };
+      return runWithChanges(request, "visual", "Delete", async () => ({
+        success: true,
+        operation: "Delete",
+        ...await deleteVisual(project, request)
+      }));
     case "Duplicate":
-      return { success: true, operation: "Duplicate", visual: await duplicateVisual(project, request) };
+      return runWithChanges(request, "visual", "Duplicate", async () => ({
+        success: true,
+        operation: "Duplicate",
+        visual: await duplicateVisual(project, request)
+      }));
     case "Move":
-      return { success: true, operation: "Move", visual: await moveVisual(project, request) };
+      return runWithChanges(request, "visual", "Move", async () => ({
+        success: true,
+        operation: "Move",
+        visual: await moveVisual(project, request)
+      }));
     case "BindFields":
-      return { success: true, operation: "BindFields", visual: await bindVisualFields(project, request) };
+      return runWithChanges(request, "visual", "BindFields", async () => ({
+        success: true,
+        operation: "BindFields",
+        visual: await bindVisualFields(project, request)
+      }));
     case "SetFormatting":
-      return { success: true, operation: "SetFormatting", visual: await setVisualFormatting(project, request) };
+      return runWithChanges(request, "visual", "SetFormatting", async () => ({
+        success: true,
+        operation: "SetFormatting",
+        visual: await setVisualFormatting(project, request)
+      }));
     default:
       throw new Error(`Unsupported visual operation: ${request.operation}`);
   }
@@ -204,82 +313,91 @@ export async function handleBookmarkOperation(request) {
 }
 
 export async function handleInteractionOperation(request) {
+  switch (request.operation) {
+    case "ListSupportedControls":
+      return {
+        success: true,
+        operation: "ListSupportedControls",
+        controlTypes: SUPPORTED_CONTROL_TYPES
+      };
+  }
+
   const project = getProjectFromRequest(request);
   switch (request.operation) {
     case "ConfigureDrillthroughPage":
-      return {
+      return runWithChanges(request, "interaction", "ConfigureDrillthroughPage", async () => ({
         success: true,
         operation: "ConfigureDrillthroughPage",
         result: await configureDrillthroughPage(project, request)
-      };
+      }));
     case "ConfigureCrossReportDrillthroughPage":
-      return {
+      return runWithChanges(request, "interaction", "ConfigureCrossReportDrillthroughPage", async () => ({
         success: true,
         operation: "ConfigureCrossReportDrillthroughPage",
         result: await configureCrossReportDrillthroughPage(project, request)
-      };
+      }));
     case "ClearDrillthroughPage":
-      return {
+      return runWithChanges(request, "interaction", "ClearDrillthroughPage", async () => ({
         success: true,
         operation: "ClearDrillthroughPage",
         page: await clearDrillthroughPage(project, request)
-      };
+      }));
     case "ClearCrossReportDrillthroughPage":
-      return {
+      return runWithChanges(request, "interaction", "ClearCrossReportDrillthroughPage", async () => ({
         success: true,
         operation: "ClearCrossReportDrillthroughPage",
         page: await clearCrossReportDrillthroughPage(project, request)
-      };
+      }));
     case "ConfigureTooltipPage":
-      return {
+      return runWithChanges(request, "interaction", "ConfigureTooltipPage", async () => ({
         success: true,
         operation: "ConfigureTooltipPage",
         page: await configureTooltipPage(project, request)
-      };
+      }));
     case "ClearTooltipPage":
-      return {
+      return runWithChanges(request, "interaction", "ClearTooltipPage", async () => ({
         success: true,
         operation: "ClearTooltipPage",
         page: await clearTooltipPage(project, request)
-      };
+      }));
     case "AssignTooltip":
-      return {
+      return runWithChanges(request, "interaction", "AssignTooltip", async () => ({
         success: true,
         operation: "AssignTooltip",
         visual: await assignTooltip(project, request)
-      };
+      }));
     case "SetVisualInteractions":
-      return {
+      return runWithChanges(request, "interaction", "SetVisualInteractions", async () => ({
         success: true,
         operation: "SetVisualInteractions",
         result: await setVisualInteractions(project, request)
-      };
+      }));
     case "SetSlicerSync":
-      return {
+      return runWithChanges(request, "interaction", "SetSlicerSync", async () => ({
         success: true,
         operation: "SetSlicerSync",
         visual: await setSlicerSync(project, request)
-      };
+      }));
     case "CreatePageNavigationButton":
-      return {
+      return runWithChanges(request, "interaction", "CreatePageNavigationButton", async () => ({
         success: true,
         operation: "CreatePageNavigationButton",
         control: await createControl(project, {
           ...request,
           controlType: "pageNavigationButton"
         })
-      };
+      }));
     case "CreatePageNavigator":
-      return {
+      return runWithChanges(request, "interaction", "CreatePageNavigator", async () => ({
         success: true,
         operation: "CreatePageNavigator",
         control: await createControl(project, {
           ...request,
           controlType: "pageNavigator"
         })
-      };
+      }));
     case "CreateSlicerActionButton":
-      return {
+      return runWithChanges(request, "interaction", "CreateSlicerActionButton", async () => ({
         success: true,
         operation: "CreateSlicerActionButton",
         control: await createControl(project, {
@@ -289,37 +407,37 @@ export async function handleInteractionOperation(request) {
               ? "clearAllSlicersButton"
               : "applyAllSlicersButton"
         })
-      };
+      }));
     case "CreateWebUrlButton":
-      return {
+      return runWithChanges(request, "interaction", "CreateWebUrlButton", async () => ({
         success: true,
         operation: "CreateWebUrlButton",
         control: await createControl(project, {
           ...request,
           controlType: "webUrlButton"
         })
-      };
+      }));
     case "CreateQnaButton":
-      return {
+      return runWithChanges(request, "interaction", "CreateQnaButton", async () => ({
         success: true,
         operation: "CreateQnaButton",
         control: await createControl(project, {
           ...request,
           controlType: "qnaButton"
         })
-      };
+      }));
     case "CreateControl":
-      return {
+      return runWithChanges(request, "interaction", "CreateControl", async () => ({
         success: true,
         operation: "CreateControl",
         control: await createControl(project, request)
-      };
+      }));
     case "UpdateControl":
-      return {
+      return runWithChanges(request, "interaction", "UpdateControl", async () => ({
         success: true,
         operation: "UpdateControl",
         control: await updateControl(project, request)
-      };
+      }));
     default:
       throw new Error(`Unsupported interaction operation: ${request.operation}`);
   }
@@ -433,6 +551,52 @@ export async function handleMobileLayoutOperation(request) {
       };
     default:
       throw new Error(`Unsupported mobile layout operation: ${request.operation}`);
+  }
+}
+
+export async function handleTemplateOperation(request) {
+  if (request.operation === "ListTemplates") {
+    return {
+      success: true,
+      operation: "ListTemplates",
+      templates: listTemplates()
+    };
+  }
+
+  const project = getProjectFromRequest(request);
+  switch (request.operation) {
+    case "CreatePageFromTemplate":
+      return runWithChanges(request, "template", "CreatePageFromTemplate", async () => ({
+        success: true,
+        operation: "CreatePageFromTemplate",
+        ...await createPageFromTemplate(project, request)
+      }));
+    case "ApplyVisualStylePreset":
+      return runWithChanges(request, "template", "ApplyVisualStylePreset", async () => ({
+        success: true,
+        operation: "ApplyVisualStylePreset",
+        ...await applyVisualStylePreset(project, request)
+      }));
+    case "CreateKpiStrip":
+      return runWithChanges(request, "template", "CreateKpiStrip", async () => ({
+        success: true,
+        operation: "CreateKpiStrip",
+        ...await createKpiStrip(project, request)
+      }));
+    case "CreateFilterBar":
+      return runWithChanges(request, "template", "CreateFilterBar", async () => ({
+        success: true,
+        operation: "CreateFilterBar",
+        ...await createFilterBar(project, request)
+      }));
+    case "CreateTooltipLayout":
+      return runWithChanges(request, "template", "CreateTooltipLayout", async () => ({
+        success: true,
+        operation: "CreateTooltipLayout",
+        ...await createTooltipLayout(project, request)
+      }));
+    default:
+      throw new Error(`Unsupported template operation: ${request.operation}`);
   }
 }
 

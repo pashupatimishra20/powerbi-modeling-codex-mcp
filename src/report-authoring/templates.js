@@ -134,6 +134,31 @@ export function getVisualTemplate(visualType) {
       template.visual.visualType = "lineAndClusteredColumnChart";
       return template;
     }
+    case "scatterChart": {
+      const template = deepClone(templates.columnChart);
+      template.visual.visualType = "scatterChart";
+      return template;
+    }
+    case "treemap": {
+      const template = deepClone(templates.pieChart);
+      template.visual.visualType = "treemap";
+      return template;
+    }
+    case "funnelChart": {
+      const template = deepClone(templates.pieChart);
+      template.visual.visualType = "funnelChart";
+      return template;
+    }
+    case "gauge": {
+      const template = deepClone(templates.card);
+      template.visual.visualType = "gauge";
+      return template;
+    }
+    case "kpi": {
+      const template = deepClone(templates.card);
+      template.visual.visualType = "kpi";
+      return template;
+    }
     case "pieChart":
       return deepClone(templates.pieChart);
     case "donutChart": {

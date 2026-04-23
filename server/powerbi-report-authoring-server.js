@@ -21,6 +21,7 @@ import {
   handleMobileLayoutOperation,
   handlePageOperation,
   handleProjectOperation,
+  handleTemplateOperation,
   handleVisualOperation
 } from "../src/report-authoring/tool-handlers.js";
 
@@ -51,6 +52,8 @@ async function dispatchTool(name, args) {
       return handleMobileLayoutOperation(request);
     case "report_composition_operations":
       return handleCompositionOperation(request);
+    case "report_template_operations":
+      return handleTemplateOperation(request);
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

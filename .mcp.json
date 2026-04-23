@@ -2,31 +2,20 @@
   "mcpServers": {
     "powerbi-modeling-mcp": {
       "type": "stdio",
-      "command": "cmd",
+      "command": "npx",
       "args": [
-        "/c",
-        "npx",
         "-y",
         "@microsoft/powerbi-modeling-mcp@latest",
         "--start"
       ],
-      "env": {
-        "SystemRoot": "C:\\Windows",
-        "PROGRAMFILES": "C:\\Program Files"
-      },
       "startupTimeoutMs": 120000
     },
     "powerbi-report-authoring-mcp": {
       "type": "stdio",
-      "command": "cmd",
+      "command": "node",
       "args": [
-        "/c",
-        ".\\scripts\\start-report-authoring-mcp.cmd"
+        "./server/powerbi-report-authoring-server.js"
       ],
-      "env": {
-        "SystemRoot": "C:\\Windows",
-        "PROGRAMFILES": "C:\\Program Files"
-      },
       "startupTimeoutMs": 120000
     }
   }

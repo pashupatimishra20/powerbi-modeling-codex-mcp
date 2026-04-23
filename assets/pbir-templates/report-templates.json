@@ -1,0 +1,34 @@
+{
+  "templates": [
+    {
+      "name": "ExecutiveSummary",
+      "description": "Creates an executive summary page with KPI highlights, a trend visual, and a category breakdown.",
+      "kind": "page",
+      "defaultStylePreset": "ExecutiveWarm"
+    },
+    {
+      "name": "DetailDrillthrough",
+      "description": "Creates a drillthrough detail page scaffold with a back button and table visual.",
+      "kind": "page",
+      "defaultStylePreset": "ExecutiveWarm"
+    },
+    {
+      "name": "TooltipMini",
+      "description": "Creates a compact tooltip page scaffold with summary visuals.",
+      "kind": "tooltip",
+      "defaultStylePreset": "ExecutiveWarm"
+    },
+    {
+      "name": "HeaderFilterBar",
+      "description": "Creates a top-of-page filter bar with slicers and optional slicer action buttons.",
+      "kind": "fragment",
+      "defaultStylePreset": "ExecutiveWarm"
+    },
+    {
+      "name": "KpiStrip3Up",
+      "description": "Creates a three-up KPI strip suitable for executive landing pages.",
+      "kind": "fragment",
+      "defaultStylePreset": "ExecutiveWarm"
+    }
+  ]
+}

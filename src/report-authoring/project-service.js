@@ -12,6 +12,7 @@ import { createPageName } from "./ids.js";
 import { deepClone, readJson, writeJson } from "./json.js";
 import {
   buildSemanticModelIndex,
+  searchBindableFields as searchBindableFieldsInModel,
   serializeSemanticModelIndex
 } from "./semantic-model.js";
 import {
@@ -272,7 +273,7 @@ export function getProjectSummary(project) {
   };
 }
 
-function getProjectFilesForValidation(project) {
+export function getProjectFiles(project) {
   const files = [
     definitionPbirFile(project),
     reportFile(project),
@@ -306,7 +307,7 @@ async function syncPageNavigators(project) {
 }
 
 export async function validateProject(project) {
-  const results = await validateJsonFiles(getProjectFilesForValidation(project));
+  const results = await validateJsonFiles(getProjectFiles(project));
   return summarizeValidationResults(results);
 }
 
@@ -327,6 +328,58 @@ export function getPage(project, pageName) {
   const filePath = pageFile(project, pageName);
   ensureExists(fs.existsSync(filePath), `Page not found: ${pageName}`);
   return readJson(filePath);
+}
+
+export function getProjectContext(project) {
+  const pagesMetadata = getPagesMetadata(project);
+  const bookmarkMetadata = getBookmarksMetadata(project);
+
+  return {
+    projectRoot: project.root,
+    activePageName: pagesMetadata.activePageName,
+    pageCount: listPageNames(project).length,
+    bookmarkCount: listBookmarkNames(project).length,
+    bookmarkGroupCount: getBookmarkGroups(bookmarkMetadata).length,
+    pages: listPageNames(project).map((pageName) => {
+      const definition = getPage(project, pageName);
+      return {
+        name: definition.name,
+        displayName: definition.displayName,
+        hidden: definition.visibility === "HiddenInViewMode",
+        visualCount: listVisualNames(project, pageName).length
+      };
+    }),
+    semanticModel: serializeSemanticModelIndex(project.semanticModel)
+  };
+}
+
+export function getPageContext(project, pageName) {
+  const definition = getPage(project, pageName);
+  const page = {
+    name: definition.name,
+    displayName: definition.displayName,
+    hidden: definition.visibility === "HiddenInViewMode",
+    pageBinding: definition.pageBinding || null
+  };
+
+  return {
+    page,
+    visuals: listVisualNames(project, pageName).map((visualName) => {
+      const visualDefinition = readJson(visualFile(project, pageName, visualName));
+      return {
+        name: visualDefinition.name,
+        visualType: visualDefinition.visual?.visualType || null,
+        hidden: Boolean(visualDefinition.isHidden),
+        position: visualDefinition.position,
+        parentGroupName: visualDefinition.parentGroupName || null
+      };
+    })
+  };
+}
+
+export function searchBindableFields(project, search, limit) {
+  refreshSemanticModel(project);
+  return searchBindableFieldsInModel(project.semanticModel, search, limit);
 }
 
 function applyPageBackground(definition, background) {

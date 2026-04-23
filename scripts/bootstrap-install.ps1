@@ -5,6 +5,8 @@ param(
     [string]$PluginParent = "$HOME\plugins",
     [string]$MarketplacePath = "$HOME\.agents\plugins\marketplace.json",
     [string]$SkillParent = $(if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME 'skills' } else { Join-Path (Join-Path $HOME '.codex') 'skills' }),
+    [ValidateSet('Full', 'PBIROnly')]
+    [string]$Mode = 'Full',
     [switch]$Force,
     [switch]$KeepTemp
 )
@@ -71,6 +73,7 @@ try {
         PluginParent = $PluginParent
         MarketplacePath = $MarketplacePath
         SkillParent = $SkillParent
+        Mode = $Mode
     }
     if ($Force) {
         $installArgs.Force = $true

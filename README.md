@@ -50,13 +50,24 @@ After making the repo public and enabling Pages (`main` branch / root), the site
 ## Install (local)
 
 1. Clone this repo.
-2. Run:
+2. Choose an install mode:
+
+- `Full` installs both the official semantic-model MCP wiring and the local PBIR report-authoring server.
+- `PBIROnly` installs only the local PBIR report-authoring server wiring for lower-noise report work.
+
+3. Run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1 -Mode Full
 ```
 
 This performs a clean reinstall for this integration by removing any previous local install at `~/plugins/powerbi-modeling-codex`, removing any previous bundled standalone skills mirrored from repo `skills/` into `~/.codex/skills`, removing duplicate marketplace entries for `./plugins/powerbi-modeling-codex`, installing the Node dependencies used by the local PBIR report-authoring server, and updating `~/.agents/plugins/marketplace.json`.
+
+PBIR-only install:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install-local.ps1 -Mode PBIROnly
+```
 
 3. Restart Codex desktop.
 
@@ -90,6 +101,12 @@ Running the same bootstrap command again performs the same clean reinstall. `-Fo
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Force"
+```
+
+PBIR-only bootstrap:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((irm 'https://raw.githubusercontent.com/pashupatimishra20/powerbi-modeling-codex-mcp/main/scripts/bootstrap-install.ps1'))) -Mode PBIROnly"
 ```
 
 After install, restart Codex desktop so the plugin and bundled standalone skills are loaded into session context.
@@ -149,13 +166,30 @@ node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.cjs list-tools
 The local report-authoring MCP adds these tool families:
 
 - `report_project_operations`: `OpenProject`, `GetProject`, `ValidateProject`, `ListSchemas`
-- `report_page_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `Duplicate`
-- `report_visual_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Duplicate`, `Move`, `BindFields`, `SetFormatting`
+- `report_page_operations`: `List`, `Get`, `GetPageContext`, `Create`, `Update`, `Delete`, `Reorder`, `Duplicate`
+- `report_visual_operations`: `List`, `Get`, `ListSupportedVisuals`, `Create`, `Update`, `Delete`, `Duplicate`, `Move`, `BindFields`, `SetFormatting`
 - `report_bookmark_operations`: `List`, `Get`, `Create`, `Update`, `Delete`, `Reorder`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`
-- `report_interaction_operations`: `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `ConfigureCrossReportDrillthroughPage`, `ClearCrossReportDrillthroughPage`, `ConfigureTooltipPage`, `ClearTooltipPage`, `AssignTooltip`, `SetVisualInteractions`, `SetSlicerSync`, `CreatePageNavigationButton`, `CreatePageNavigator`, `CreateSlicerActionButton`, `CreateWebUrlButton`, `CreateQnaButton`, `CreateControl`, `UpdateControl`
+- `report_interaction_operations`: `ListSupportedControls`, `ConfigureDrillthroughPage`, `ClearDrillthroughPage`, `ConfigureCrossReportDrillthroughPage`, `ClearCrossReportDrillthroughPage`, `ConfigureTooltipPage`, `ClearTooltipPage`, `AssignTooltip`, `SetVisualInteractions`, `SetSlicerSync`, `CreatePageNavigationButton`, `CreatePageNavigator`, `CreateSlicerActionButton`, `CreateWebUrlButton`, `CreateQnaButton`, `CreateControl`, `UpdateControl`
 - `report_field_parameter_operations`: `List`, `Create`, `Update`, `Delete`, `BindVisual`, `CreateSlicerControl`
 - `report_mobile_layout_operations`: `List`, `Get`, `AutoCreateFromDesktop`, `PlaceVisual`, `UpdateVisual`, `RemoveVisual`, `Clear`
 - `report_composition_operations`: `ListGroups`, `GetGroup`, `CreateGroup`, `UpdateGroup`, `DeleteGroup`, `AddToGroup`, `RemoveFromGroup`, `Ungroup`, `SetVisibility`, `SetLayerOrder`, `Align`, `Distribute`, `ResizeToFit`
+- `report_template_operations`: `ListTemplates`, `CreatePageFromTemplate`, `ApplyVisualStylePreset`, `CreateKpiStrip`, `CreateFilterBar`, `CreateTooltipLayout`
+
+Low-noise read operations now available:
+
+- `report_project_operations -> GetProjectContext`
+- `report_project_operations -> SearchBindableFields`
+- `report_page_operations -> GetPageContext`
+- `report_visual_operations -> ListSupportedVisuals`
+- `report_interaction_operations -> ListSupportedControls`
+
+Mutating report operations now return a `changes` block with:
+
+- touched files
+- created entities
+- updated entities
+- deleted entities
+- validation warnings
 
 Phase 4 local PBIR authoring now supports:
 
@@ -172,6 +206,11 @@ Phase 4 local PBIR authoring now supports:
 - `lineAndClusteredColumnChart`
 - `pieChart`
 - `donutChart`
+- `scatterChart`
+- `treemap`
+- `funnelChart`
+- `gauge`
+- `kpi`
 - `slicer`
 - `textbox`
 - true report bookmarks and bookmark groups
@@ -189,6 +228,20 @@ Phase 4 local PBIR authoring now supports:
 - cross-report drillthrough page targets with `referenceScope: "CrossReport"` and `settings.useCrossReportDrillthrough`
 - mobile layout authoring through per-visual `mobile.json` files
 - field-parameter orchestration through the official modeling MCP with local PBIR wiring
+- template-guided scaffolds for `ExecutiveSummary`, `DetailDrillthrough`, `TooltipMini`, `HeaderFilterBar`, and `KpiStrip3Up`
+- page-wide style presets such as `ExecutiveWarm`
+
+## Safe Usage
+
+- Prefer anonymized or non-production PBIR/PBIP copies when experimenting with agent-driven changes.
+- `Full` mode exposes both semantic-model and PBIR authoring workflows. Use `PBIROnly` when you want lower-noise report editing without semantic-model MCP context.
+- The local PBIR authoring server only reads and writes your report project files. The semantic-model MCP can expose model metadata and queries to the LLM you are using.
+- Review the generated `changes` payload after write operations before continuing to the next prompt.
+
+See also:
+
+- [docs/safe-usage.md](docs/safe-usage.md)
+- [docs/remote-fabric-troubleshooting.md](docs/remote-fabric-troubleshooting.md)
 
 Typical phase-4 workflows:
 
