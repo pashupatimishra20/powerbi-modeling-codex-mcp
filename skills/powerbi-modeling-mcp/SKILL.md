@@ -103,6 +103,7 @@ node scripts/pbi_mcp_client.cjs help measure_operations
 ## Troubleshooting
 
 - If native client MCP handshake fails, use `scripts/pbi_mcp_client.cjs` as transport fallback.
+- The fallback client first looks for the runtime in the repo/plugin layout, then in `~/plugins/powerbi-modeling-codex/src/report-authoring/modeling-mcp-client.js`. Set `PBI_MCP_RUNTIME_PATH` if your plugin install lives elsewhere.
 - If the skill is installed standalone under `~/.codex/skills`, do not expect `server/` files inside the skill folder. The local PBIR report-authoring MCP server is provided by the installed plugin under `~/plugins/powerbi-modeling-codex`.
 - If startup fails on first run, pre-warm package:
 

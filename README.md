@@ -161,6 +161,8 @@ Then rebuild the summary index if needed.
 node .\skills\powerbi-modeling-mcp\scripts\pbi_mcp_client.cjs list-tools
 ```
 
+The fallback client resolves its runtime from either the repo/plugin source tree or the installed plugin path at `~/plugins/powerbi-modeling-codex/src/report-authoring/modeling-mcp-client.js`. If you installed the plugin somewhere else, set `PBI_MCP_RUNTIME_PATH` before invoking the client.
+
 ## Report Authoring Tool Surface
 
 The local report-authoring MCP adds these tool families:

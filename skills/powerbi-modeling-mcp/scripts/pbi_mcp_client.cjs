@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { pathToFileURL } = require("url");
 
@@ -38,15 +39,42 @@ function printUsage() {
 Environment overrides:
   PBI_MCP_COMMAND   command executable
   PBI_MCP_ARGS      JSON array or space-delimited args
+  PBI_MCP_RUNTIME_PATH
+                    explicit path to modeling-mcp-client.js
 `);
 }
 
 async function loadRuntime() {
-  const runtimePath = path.resolve(
-    __dirname,
-    "../../../src/report-authoring/modeling-mcp-client.js"
-  );
+  const runtimePath = resolveRuntimePath();
   return import(pathToFileURL(runtimePath).href);
+}
+
+function resolveRuntimePath() {
+  const configuredPath = process.env.PBI_MCP_RUNTIME_PATH;
+  const candidates = [
+    configuredPath,
+    path.resolve(__dirname, "../../../src/report-authoring/modeling-mcp-client.js"),
+    path.resolve(
+      os.homedir(),
+      "plugins",
+      "powerbi-modeling-codex",
+      "src",
+      "report-authoring",
+      "modeling-mcp-client.js"
+    )
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `Unable to locate modeling MCP runtime. Checked:\n${candidates
+      .map((candidate) => `- ${candidate}`)
+      .join("\n")}`
+  );
 }
 
 async function run() {
